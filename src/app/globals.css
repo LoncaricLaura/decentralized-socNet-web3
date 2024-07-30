@@ -24,3 +24,33 @@ body {
     text-wrap: balance;
   }
 }
+
+@layer components {
+  input {
+    @apply w-full border border-b border-x-0 border-t-0 border-b-[#121212] bg-transparent py-2 px-2 text-sm;
+    
+    &:focus {
+      @apply border-b-[#121212] outline-none px-2 py-2 text-[#1f1f1f];
+    }
+
+    &::placeholder {
+      @apply text-sm text-[#949292]
+    }
+  }
+  label {
+    @apply text-[#121212]
+  }
+  textarea {
+    @apply text-[#121212] p-2 text-sm bg-transparent border border-b border-x-0 border-t-0 border-b-[#121212]
+  }
+  textarea {
+
+    &:focus {
+      @apply border-b-[#121212] outline-none
+    }
+
+    &::placeholder {
+      @apply text-sm text-[#949292]
+    }
+  }
+}

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import ConnectToWallet from "./components/ConnectToWallet";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function Login() {
   const router = useRouter();
@@ -14,15 +15,9 @@ export default function Login() {
 
   return (
     <main className="relative flex flex-col h-screen w-full">
-      {/* <video className="absolute top-0 left-0 w-full h-full object-cover" autoPlay loop muted>
-        <source src="/videos/home.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video> */}
-      <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60"></div>
-      
-      <div className="relative flex flex-col items-start md:justify-center h-full px-4 sm:px-16 2xl:px-24 py-28 md:py-36 z-10">
-        <div className="flex flex-col gap-6 md:gap-10 xl:gap-16 w-full">
-          <div className="w-full md:w-1/2 flex flex-col gap-4 justify-start">
+      <div className="relative flex flex-col md:flex-row items-start md:justify-between h-full px-4 sm:px-16 2xl:px-24 py-28 md:py-36 z-10 w-full">
+        <div className="flex flex-col gap-6 md:gap-10 xl:gap-16 w-full md:w-1/2">
+          <div className="w-full flex flex-col gap-4 justify-start">
             <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-[#7ca3f0]">Welcome to Spark: The Decentralized Social Network</h1>
             <p className="text-md lg:text-xl font-bold text-[#7ca3f0] w-full sm:w-3/5 md:w-full">Connect, share, and engage with true ownership and privacy on the Ethereum blockchain.</p>
           </div>
@@ -32,6 +27,16 @@ export default function Login() {
             </button>
             {showModal && <ConnectToWallet setShowModal={setShowModal} />}
           </div>
+        </div>
+        <div className="w-full md:w-1/2">
+        <Image
+            src="/images/login.png"
+            alt="Image"
+            className="w-full h-auto"
+            width={500}
+            height={500}
+            priority
+          />
         </div>
       </div>
     </main>
