@@ -1,17 +1,14 @@
 'use client'
-import { useRouter  } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from 'next/navigation'
-import { AccountType } from "./ConnectToWallet";
 import Link from 'next/link'
 import MobileMenu from "./MobileMenu";
+import { AccountType } from "./ConnectToWallet";
 
 interface HeaderProps extends AccountType {}
 
 export default function Header() {
-  const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
   const [accountData, setAccountData] = useState<HeaderProps>({});
   const [mobMenuOpen, setMobMenuOpen] = useState(false);
 
@@ -21,7 +18,7 @@ export default function Header() {
       setAccountData(JSON.parse(storedData));
     }
   }, []);
-  
+
   const pathname = usePathname();
 
   const toggleMobMenu = () => {
@@ -43,7 +40,7 @@ export default function Header() {
           />
           {pathname === '/' && (
             <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-l from-[#7ca3f0] to-[#4a90e2] text-transparent bg-clip-text italic">
-              Spark
+              Spark 
             </h1>
           )}
         </div>

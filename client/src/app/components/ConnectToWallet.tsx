@@ -39,9 +39,9 @@ export default function ConnectToWallet({ setShowModal, setAccountData }: Connec
           chainId: network.chainId.toString(),
           network: network.name,
         };
-        localStorage.setItem('accountData', JSON.stringify(accountData));
-
+        
         setAccountData?.(accountData);
+        localStorage.setItem('accountData', JSON.stringify(accountData));
         router.push('/home');
       } catch (error: Error | any) {
         alert(`Error connecting to MetaMask: ${error?.message ?? error}`);
@@ -49,7 +49,7 @@ export default function ConnectToWallet({ setShowModal, setAccountData }: Connec
     } else {
       alert("MetaMask not installed");
     }
-  }, []);
+  }, [setAccountData, router]);
 
   const closeModal = () => {
     setShowModal(false);

@@ -1,7 +1,5 @@
 'use client'
 
-import { useRouter  } from "next/navigation";
-import { useState } from "react";
 import Menu from "../components/Menu";
 import Post from "../components/Post";
 

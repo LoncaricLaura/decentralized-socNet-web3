@@ -15,7 +15,7 @@ export default function Login() {
 
   return (
     <main className="relative flex flex-col h-screen w-full">
-      <div className="relative flex flex-col md:flex-row items-start md:justify-between h-full px-4 sm:px-16 2xl:px-24 py-28 md:py-36 z-10 w-full">
+      <div className="relative flex flex-col md:flex-row items-center md:justify-between h-full px-4 sm:px-16 2xl:px-24 py-28 md:py-36 z-10 w-full">
         <div className="flex flex-col gap-6 md:gap-10 xl:gap-16 w-full md:w-1/2">
           <div className="w-full flex flex-col gap-4 justify-start">
             <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-[#7ca3f0]">Welcome to Spark: The Decentralized Social Network</h1>
@@ -28,7 +28,7 @@ export default function Login() {
             {showModal && <ConnectToWallet setShowModal={setShowModal} />}
           </div>
         </div>
-        <div className="w-full md:w-1/2">
+        {/* <div className="w-full md:w-1/2">
         <Image
             src="/images/login.png"
             alt="Image"
@@ -37,7 +37,7 @@ export default function Login() {
             height={500}
             priority
           />
-        </div>
+        </div> */}
       </div>
     </main>
   );

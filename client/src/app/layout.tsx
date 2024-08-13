@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={josefinSans.className}>
       <body className={josefinSans.className}>{children}
-      <Header />
+          <Header />
       </body>
     </html>
   );
