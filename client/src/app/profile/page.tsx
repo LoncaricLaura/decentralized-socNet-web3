@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import Post from "../components/Post";
 import EditProfile from "../components/EditProfile";
+import AddPost from "../components/AddPost";
 import { getIPFSUrl } from '../ipfs';
 import { PROFILE_ABI, PROFILE_ADDRESS } from '../../../../context/Constants';
 import { ethers } from 'ethers';
@@ -11,7 +12,8 @@ import { ethers } from 'ethers';
 declare var window: any
 
 export default function Profile() {
-  const [showModal, setShowModal] = useState(false);
+  const [showModalEdit, setShowModalEdit] = useState(false);
+  const [showModalPost, setShowModalPost] = useState(false);
   const [profileData, setProfileData] = useState({
     name: "",
     description: "",
@@ -51,8 +53,12 @@ export default function Profile() {
 
   const profileImageUrl = getIPFSUrl(profileData.profileImageCid);
 
-  const toggleModal = () => {
-    setShowModal(!showModal);
+  const toggleModalEdit = () => {
+    setShowModalEdit(!showModalEdit);
+  };
+
+  const toggleModalPost = () => {
+    setShowModalPost(!showModalPost);
   };
 
 //  {fake data}
@@ -105,12 +111,11 @@ export default function Profile() {
                 </div>
             </div>
         </div>
-        <div className="pt-5 flex justify-end items-center">
+        <div className="pt-5 flex justify-end items-center gap-x-6">
           <button
               className="w-fit flex gap-1"
-              onClick={toggleModal}
+              onClick={toggleModalEdit}
             >
-              <p className="text-sm">Edit profile</p>
               <Image
                 src="/icons/icon-edit.png"
                 alt="Icon Edit"
@@ -118,6 +123,20 @@ export default function Profile() {
                 height={15}
                 priority
               />
+              <p className="text-sm">Edit profile</p>
+            </button>
+          <button
+              className="w-fit flex items-center gap-1"
+              onClick={toggleModalPost}
+            >
+              <Image
+                src="/icons/icon-add.svg"
+                alt="Icon Add"
+                width={12}
+                height={12}
+                priority
+              />
+              <p className="text-sm">Add post</p>
             </button>
         </div>
         <div className="pt-16 flex flex-col md:flex-row justify-center gap-10 w-full">
@@ -142,7 +161,8 @@ export default function Profile() {
             </div>
         </div>
       </div>
-      {showModal && <EditProfile setShowModal={setShowModal} />}
+      {showModalEdit && <EditProfile setShowModal={setShowModalEdit} profileData={profileData} />}
+      {showModalPost && <AddPost setShowModal={setShowModalPost} profileData={profileData} />}
     </main>
   );
 }

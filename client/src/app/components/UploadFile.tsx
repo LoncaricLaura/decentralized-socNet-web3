@@ -47,7 +47,7 @@ const InputFiles: React.FC<InputFilesProps> = ({ files, setFiles, txt = '', isRe
   return (
     <div className="mb-4 flex w-full flex-col">
       <label htmlFor="message" className="fs-sm pb-2 text-gray80">
-        {txt || 'Please upload documents'}
+        {txt || ''}
       </label>
       <div
         className={`flex flex-col items-center justify-center gap-4 border border-dashed border-gray-500 py-8 bg-[#7ca3f0]/20 rounded-md ${

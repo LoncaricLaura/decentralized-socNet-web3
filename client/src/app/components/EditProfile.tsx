@@ -8,14 +8,15 @@ import { PROFILE_ABI, PROFILE_ADDRESS } from '../../../../context/Constants';
 
 interface EditProfileProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
+  profileData: { name: string; description: string; profileImageCid: string };
 }
 
 declare var window: any
 
-export default function EditProfile({ setShowModal }: EditProfileProps) {
+export default function EditProfile({ setShowModal, profileData }: EditProfileProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const [name, setName] = useState<string>(profileData.name || '');
+  const [description, setDescription] = useState<string>(profileData.description || '');
 
   const closeModal = () => {
     setShowModal(false);
@@ -66,7 +67,7 @@ export default function EditProfile({ setShowModal }: EditProfileProps) {
 
     return (
       <main className="fixed flex items-center justify-center top-0 left-0 z-40 m-auto w-full h-full bg-[#121212]/85">
-        <div className="relative w-[85%] sm:w-1/2 lg:w-1/2 xl:w-1/3 h-3/4 overflow-auto bg-[#cfcccc] rounded-md px-4 py-8 flex flex-col gap-6">
+        <div className="relative w-[85%] sm:w-1/2 lg:w-1/2 2xl:w-1/3 h-3/4 overflow-auto bg-[#cfcccc] rounded-md px-4 py-8 flex flex-col gap-6">
             <p className="text-[#121212] font-bold text-lg">Edit profile</p>
             <button
               className="absolute top-8 right-4"
@@ -81,7 +82,7 @@ export default function EditProfile({ setShowModal }: EditProfileProps) {
               />
             </button>
             <form className="w-[100%] flex flex-col gap-4" method="POST">
-                <div className="flex flex-col items-start w-full max-h-[100px] h-full">
+                <div className="flex flex-col items-start w-full max-h-[100px] h-full text-black">
                     <label>Name</label>
                     <input className="" type="text" name="name" value={name} placeholder="John Doe" onChange={(e) => setName(e.target.value)} />
                 </div>
@@ -97,7 +98,7 @@ export default function EditProfile({ setShowModal }: EditProfileProps) {
 
             </form>
             <button 
-              className="absolute z-20 bottom-8 right-4 px-4 font-bold py-2 text-sm md:text-md bg-gradient-to-r from-[#7ca3f0]/60 to-[#4a90e2]/60 text-[#121212] rounded-md min-w-20 md:min-w-32 w-fit" 
+              className="font-bold px-4 py-2 text-sm md:text-md bg-gradient-to-r from-[#7ca3f0]/60 to-[#4a90e2]/60 text-[#121212] rounded-md min-w-20 md:min-w-32 w-fit" 
               type="submit"
               onClick={handleSaveClick}
             >
