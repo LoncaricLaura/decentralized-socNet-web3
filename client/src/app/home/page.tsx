@@ -1,20 +1,29 @@
 'use client'
 import Menu from "../components/Menu";
 import Post from "../components/Post";
+import Image from "next/image";
 import { getFile, getIPFSUrl } from '../ipfs';
 import { PROFILE_ABI, PROFILE_ADDRESS, POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
 import { ethers } from 'ethers';
 import { Key, useEffect, useState } from "react";
+import AddPost from "../components/AddPost";
+import { useRouter } from "next/navigation";
 
 declare var window: any
 
 export default function Home() {
+  const router = useRouter();
   const [profileData, setProfileData] = useState({
     name: "",
     description: "",
     profileImageCid: "",
   });
   const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [showModalPost, setShowModalPost] = useState(false);
+
+  const toggleModalPost = () => {
+    setShowModalPost(!showModalPost);
+  };
 
 // TODO: change function -> all posts will be displayed here
   useEffect(() => {
@@ -75,7 +84,18 @@ export default function Home() {
     <main className="relative flex flex-row min-h-screen">
       <div className="flex justify-start gap-10 px-4 sm:px-16 2xl:px-24 py-16 w-full">
         <Menu />
-        <div className="w-full md:w-[80%] xl:w-[60%] pt-16">
+        <div className="w-full md:w-[80%] xl:w-[50%] pt-16">
+          <div className="flex items-start gap-3 w-full h-fit px-4 rounded-md mb-10">
+            <Image
+              src={profileImageUrl}
+              alt={`${profileData.name}'s avatar`}
+              width={50}
+              height={50}
+              className="rounded-full shadow-md shadow-gray-800 cursor-pointer"
+              onClick={() => router.push('/profile')}
+            />
+            <textarea name="content" rows={2} cols={50} placeholder={`Share your thoughts, ${profileData.name}`} className="cursor-pointer bg-[#e1e4f5]/50 rounded-full w-full placeholder:pl-2 placeholder:text-gray-800" onClick={toggleModalPost}></textarea>
+          </div>
         {userPosts.length > 0 ? (
                   userPosts.map((post: { username: string; handle: string; timestamp: Date; content: string; mediaUrl: string | undefined; likes: number; retweets: number; replies: number; }, index: Key | null | undefined) => (
                     <Post
@@ -96,6 +116,7 @@ export default function Home() {
               )}
         </div>
       </div>
+      {showModalPost && <AddPost setShowModal={setShowModalPost} profileData={profileData} />}
     </main>
   );
 }

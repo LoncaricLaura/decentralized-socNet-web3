@@ -162,8 +162,8 @@ export default function Profile() {
               <p className="text-sm">Add post</p>
             </button>
         </div>
-        <div className="pt-16 flex flex-col md:flex-row justify-center gap-10 w-full">
-                <div className="relative md:sticky top-0 md:top-32 flex flex-col items-start justify-center h-full text-center pb-12  md:pb-16 w-full md:w-[20%] border-b md:border-b-0 md:border-r border-[#d1e3fa] mt-0 md:mt-0">
+        <div className="pt-16 flex flex-col md:flex-row justify-center gap-10 w-full max-w-full md:max-w-[80%] 3xl:max-w-[70%]">
+                <div className="relative md:sticky top-0 md:top-32 flex flex-col items-start justify-center h-full text-center pb-12 md:pb-16 w-full md:w-[20%] border-b md:border-b-0 md:border-r border-[#d1e3fa] mt-0 md:mt-0">
                     <p className="mt-2 mr-4 lg:mr-0 text-sm text-gray-400 text-start text-wrap">{profileData.description}</p>
                 </div>
             <div className="flex flex-col w-full md:w-[65%] py-b md:pb-16">
