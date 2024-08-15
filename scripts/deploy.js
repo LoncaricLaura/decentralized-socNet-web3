@@ -6,6 +6,12 @@ async function main() {
   await profile.waitForDeployment();
 
   console.log("Profile deployed to:", await profile.getAddress());
+
+  const Post = await ethers.getContractFactory("Post");
+  const post = await Post.deploy();
+  await post.waitForDeployment();
+
+  console.log("Post deployed to:", await post.getAddress());
 }
 
 main()

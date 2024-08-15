@@ -12,6 +12,16 @@ export async function addFile(file: File): Promise<string> {
   }
 }
 
+export async function addJson(jsonData: object): Promise<string> {
+  try {
+    const added = await ipfsClient.add(JSON.stringify(jsonData));
+    return added.cid.toString();
+  } catch (error) {
+    console.error('Error uploading JSON:', error);
+    throw error;
+  }
+}
+
 export async function getFile(cid: string): Promise<Uint8Array> {
   try {
     const stream = ipfsClient.cat(cid);

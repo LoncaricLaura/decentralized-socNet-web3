@@ -1,11 +1,18 @@
 'use client'
 import Image from "next/image";
+import React from 'react'
+import ReactTimeAgo from 'react-time-ago'
+import TimeAgo from 'javascript-time-ago'
+
+import en from 'javascript-time-ago/locale/en'
+
+TimeAgo.addDefaultLocale(en)
 
 interface PostProps {
   avatarUrl: string;
   username: string;
   handle: string;
-  timestamp: string;
+  timestamp: Date;
   content: string;
   mediaUrl?: string;
   likes: number;
@@ -35,12 +42,12 @@ export default function Post({
           className="rounded-full shadow-md shadow-gray-800"
         />
         <div className="flex-1">
-          <div className="flex items-center justify-between text-[#e8f0fa]">
-            <div>
+          <div className="flex justify-between text-[#e8f0fa]">
+            <div className="flex flex-col items-center">
               <span className="font-bold">{username}</span>
               <span className="text-sm ml-1">@{handle}</span>
             </div>
-            <span className="text-sm">{timestamp}</span>
+            <ReactTimeAgo date={timestamp} locale="en-US" className="text-sm"/>
           </div>
           <p className="mt-2 text-[#e8f0fa]">{content}</p>
           {mediaUrl && (
@@ -50,6 +57,7 @@ export default function Post({
                 alt="Post media"
                 width={200}
                 height={200}
+                style={{ width: '100%', height: 'auto' }}
                 className="rounded-lg"
               />
             </div>

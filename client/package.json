@@ -17,9 +17,11 @@
     "hardhat": "^2.22.5",
     "helia": "^4.2.5",
     "ipfs-http-client": "^60.0.1",
+    "javascript-time-ago": "^2.5.10",
     "next": "14.2.4",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-time-ago": "^7.3.3"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.6",

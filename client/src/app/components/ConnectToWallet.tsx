@@ -56,10 +56,10 @@ export default function ConnectToWallet({ setShowModal, setAccountData }: Connec
   };
     return (
       <main className="fixed flex items-center justify-center top-0 left-0 z-40 m-auto w-full h-full bg-[#121212]/85">
-        <div className="relative w-[85%] sm:w-1/2 lg:w-1/2 2xl:w-1/3 h-1/2 bg-[#cfcccc] rounded-md p-4 flex flex-col gap-6">
-            <p className="text-[#121212] font-bold">Connect to your wallet</p>
+        <div className="relative w-[50%] sm:w-1/2 lg:w-1/2 2xl:w-1/4 h-1/4 bg-[#cfcccc] rounded-md px-4 py-6 flex flex-col items-center gap-6">
+            <p className="text-[#121212] text-lg md:text-xl font-bold">Connect to your wallet</p>
             <button
-              className="absolute top-4 right-4"
+              className="absolute top-6 right-4"
               onClick={closeModal}
             >
               <Image
@@ -70,15 +70,15 @@ export default function ConnectToWallet({ setShowModal, setAccountData }: Connec
                 priority
               />
             </button>
-            <div className="flex gap-4 bg-[#f0eded] rounded-md px-4 py-2 w-fit">
+            <div className="flex gap-4 bg-[#f0eded] hover:bg-[#f7f5f5] rounded-md px-4 py-2 w-fit m-auto">
               <Image
                 src="/icons/icon-metamask.svg"
                 alt="MetaMask"
-                width={30}
-                height={30}
+                width={50}
+                height={50}
                 priority
               />
-              <button onClick={_connectToMetaMask} className="text-[#121212] text-sm">
+              <button onClick={_connectToMetaMask} className="text-[#121212] text-md">
                 Connect to MetaMask
               </button>
            </div>

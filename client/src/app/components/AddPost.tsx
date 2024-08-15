@@ -2,9 +2,9 @@
 import Image from 'next/image';
 import { useState } from "react";
 import UploadFile from '../components/UploadFile'
-import { addFile } from '../ipfs'
+import { addFile, addJson } from '../ipfs'
 import { ethers } from 'ethers';
-import { PROFILE_ABI, PROFILE_ADDRESS } from '../../../../context/Constants';
+import { POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
 
 interface AddPostProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -15,13 +15,46 @@ declare var window: any
 
 export default function AddPost({ setShowModal, profileData }: AddPostProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [description, setDescription] = useState<string>('');
+  const [content, setContent] = useState<string>('');
+  const [location, setLocation] = useState<string>('');
 
   const closeModal = () => {
     setShowModal(false);
   };
 
   const uploadPost = async () => {
+    try {
+        let mediaCid = '';
+        if (selectedFiles.length > 0) {
+            mediaCid = await addFile(selectedFiles[0]);
+            console.log(`Uploaded media CID: ${mediaCid}`);
+        }
+
+        const postJson = {
+            media: mediaCid,
+            content: content,
+            location: location,
+            timestamp: Date.now()
+        };
+
+        const postCid = await addJson(postJson);
+        console.log(`Uploaded post JSON CID: ${postCid}`);
+
+        const ethereum = window.ethereum;
+        if (ethereum) {
+            const provider = new ethers.BrowserProvider(ethereum);
+            const signer = await provider.getSigner();
+            const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
+
+            await postContract.createPost(postCid);
+            console.log("Post stored on-chain successfully!");
+            closeModal();
+        } else {
+            console.error("Ethereum object not found, install Metamask!");
+        }
+    } catch (error) {
+      console.error("Error uploading post:", error);
+    }
   };
   
   const handleSaveClick = () => {
@@ -46,7 +79,11 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
             </button>
             <form className="w-[100%] flex flex-col gap-4" method="POST">
                 <div className="flex flex-col">
-                    <textarea name="description" rows={2} cols={50} value="" placeholder="Share your thoughts..." onChange={(e) => setDescription(e.target.value)}></textarea>
+                    <textarea name="content" rows={2} cols={50} value={content} placeholder="Share your thoughts..." onChange={(e) => setContent(e.target.value)}></textarea>
+                </div>
+
+                <div className="flex flex-col">
+                    <textarea name="text" rows={2} cols={50} value={location} placeholder="Location" onChange={(e) => setLocation(e.target.value)}></textarea>
                 </div>
 
                 <div className="flex">
