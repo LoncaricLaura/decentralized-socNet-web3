@@ -24,14 +24,16 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
 
   const uploadPost = async () => {
     try {
-        let mediaCid = '';
-        if (selectedFiles.length > 0) {
-            mediaCid = await addFile(selectedFiles[0]);
-            console.log(`Uploaded media CID: ${mediaCid}`);
-        }
+      const mediaCids: string[] = [];
+    
+      for (const file of selectedFiles) {
+        const mediaCid = await addFile(file);
+        console.log(`Uploaded media CID: ${mediaCid}`);
+        mediaCids.push(mediaCid);
+      }
 
         const postJson = {
-            media: mediaCid,
+            media: mediaCids,
             content: content,
             location: location,
             timestamp: Date.now()

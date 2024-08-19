@@ -3,6 +3,7 @@ import Image from "next/image";
 import React from 'react'
 import ReactTimeAgo from 'react-time-ago'
 import TimeAgo from 'javascript-time-ago'
+import PostSwiper from "./PostSwiper";
 
 import en from 'javascript-time-ago/locale/en'
 
@@ -14,7 +15,7 @@ interface PostProps {
   handle: string;
   timestamp: Date;
   content: string;
-  mediaUrl?: string;
+  mediaUrls?: string[];
   likes: number;
   retweets: number;
   replies: number;
@@ -26,13 +27,14 @@ export default function Post({
   handle,
   timestamp,
   content,
-  mediaUrl,
+  mediaUrls,
   likes,
   retweets,
   replies,
 }: PostProps) {
+
   return (
-    <div className="bg-[#E8EAF7]/10 rounded-md shadow-md p-4 mb-4 transition-transform transform hover:scale-[1.02] duration-500 hover:shadow-lg">
+    <div className="relative bg-[#E8EAF7]/10 rounded-md shadow-md p-4 mb-4 hover:shadow-lg">
       <div className="flex items-start space-x-4">
         <Image
           src={avatarUrl}
@@ -41,7 +43,7 @@ export default function Post({
           height={50}
           className="rounded-full shadow-md shadow-gray-800"
         />
-        <div className="flex-1">
+        <div className="relative w-full max-w-[80%]">
           <div className="flex justify-between text-[#e8f0fa]">
             <div className="flex flex-col items-center">
               <span className="font-bold">{username}</span>
@@ -50,16 +52,9 @@ export default function Post({
             <ReactTimeAgo date={timestamp} locale="en-US" className="text-sm"/>
           </div>
           <p className="mt-2 text-[#e8f0fa]">{content}</p>
-          {mediaUrl && (
-            <div className="mt-2">
-              <Image
-                src={mediaUrl}
-                alt="Post media"
-                width={200}
-                height={200}
-                style={{ width: '100%', height: 'auto' }}
-                className="rounded-lg"
-              />
+          {mediaUrls && mediaUrls.length > 0 && (
+            <div className="relative mt-2 z-0">
+                <PostSwiper mediaUrls={mediaUrls} />
             </div>
           )}
           <div className="flex space-x-4 mt-4 text-gray-500">

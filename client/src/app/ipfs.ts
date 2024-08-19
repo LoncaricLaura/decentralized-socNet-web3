@@ -50,3 +50,7 @@ export async function getFile(cid: string): Promise<Uint8Array> {
 export function getIPFSUrl(cid: string): string {
   return `http://localhost:8080/ipfs/${cid}`;
 }
+
+export function getIPFSUrls(cids: string[]): string[] {
+  return cids.map(cid => `http://localhost:8080/ipfs/${cid}`);
+}

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Post from "../components/Post";
 import EditProfile from "../components/EditProfile";
 import AddPost from "../components/AddPost";
-import { getFile, getIPFSUrl } from '../ipfs';
+import { getFile, getIPFSUrl, getIPFSUrls } from '../ipfs';
 import { PROFILE_ABI, PROFILE_ADDRESS, POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
 import { ethers } from 'ethers';
 
@@ -59,12 +59,13 @@ export default function Profile() {
                 handle: profileData.name.toLowerCase().replace(/\s+/g, ''),
                 timestamp: new Date(Number(postData.timestamp) * 1000),
                 content: parsedPost.content,
-                mediaUrl: getIPFSUrl(parsedPost.media)
+                mediaUrl: getIPFSUrls(parsedPost.media)
               };
             })
           )
           posts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
           setUserPosts(posts);
+          console.log('2. posts', posts);
         }
       } catch (error) {
         console.error("Error fetching profile data:", error);
@@ -83,32 +84,6 @@ export default function Profile() {
   const toggleModalPost = () => {
     setShowModalPost(!showModalPost);
   };
-
-//  {fake data}
-  const posts = [
-    {
-      avatarUrl: "/images/icon-profile.png",
-      username: "John Doe",
-      handle: "johndoe",
-      timestamp: "2h ago",
-      content: "This is an example of a Twitter-like post.",
-      mediaUrl: "/images/icon-chat.png",
-      likes: 123,
-      retweets: 45,
-      replies: 67,
-    },
-    {
-      avatarUrl: "/images/icon-profile.png",
-      username: "John Doe",
-      handle: "johndoe",
-      timestamp: "3h ago",
-      content: "Another example post.",
-      mediaUrl: "/images/icon-chat.png",
-      likes: 234,
-      retweets: 56,
-      replies: 78,
-    },
-  ];
 
   return (
     <main className="min-h-screen w-full">
@@ -176,7 +151,7 @@ export default function Profile() {
                         handle={post.handle}
                         timestamp={post.timestamp}
                         content={post.content}
-                        mediaUrl={post.mediaUrl}
+                        mediaUrls={post.mediaUrl}
                         likes={post.likes}
                         retweets={post.retweets}
                         replies={post.replies}

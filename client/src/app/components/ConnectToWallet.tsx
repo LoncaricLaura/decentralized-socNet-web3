@@ -56,7 +56,7 @@ export default function ConnectToWallet({ setShowModal, setAccountData }: Connec
   };
     return (
       <main className="fixed flex items-center justify-center top-0 left-0 z-40 m-auto w-full h-full bg-[#121212]/85">
-        <div className="relative w-[50%] sm:w-1/2 lg:w-1/2 2xl:w-1/4 h-1/4 bg-[#cfcccc] rounded-md px-4 py-6 flex flex-col items-center gap-6">
+        <div className="relative w-[50%] sm:w-1/2 lg:w-1/3 2xl:w-1/3 h-1/3 bg-[#cfcccc] rounded-md px-4 pt-6 pb-12 flex flex-col items-center gap-6">
             <p className="text-[#121212] text-lg md:text-xl font-bold">Connect to your wallet</p>
             <button
               className="absolute top-6 right-4"

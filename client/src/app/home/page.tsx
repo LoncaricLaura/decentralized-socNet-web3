@@ -2,7 +2,7 @@
 import Menu from "../components/Menu";
 import Post from "../components/Post";
 import Image from "next/image";
-import { getFile, getIPFSUrl } from '../ipfs';
+import { getFile, getIPFSUrl, getIPFSUrls } from '../ipfs';
 import { PROFILE_ABI, PROFILE_ADDRESS, POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
 import { ethers } from 'ethers';
 import { Key, useEffect, useState } from "react";
@@ -63,7 +63,7 @@ export default function Home() {
                 handle: profileData.name.toLowerCase().replace(/\s+/g, ''),
                 timestamp: new Date(Number(postData.timestamp) * 1000),
                 content: parsedPost.content,
-                mediaUrl: getIPFSUrl(parsedPost.media)
+                mediaUrl: getIPFSUrls(parsedPost.media)
               };
             })
           )
@@ -97,7 +97,7 @@ export default function Home() {
             <textarea name="content" rows={2} cols={50} placeholder={`Share your thoughts, ${profileData.name}`} className="cursor-pointer bg-[#e1e4f5]/50 rounded-full w-full placeholder:pl-2 placeholder:text-gray-800" onClick={toggleModalPost}></textarea>
           </div>
         {userPosts.length > 0 ? (
-                  userPosts.map((post: { username: string; handle: string; timestamp: Date; content: string; mediaUrl: string | undefined; likes: number; retweets: number; replies: number; }, index: Key | null | undefined) => (
+                  userPosts.map((post, index) => (
                     <Post
                         key={index}
                         avatarUrl={profileImageUrl}
@@ -105,7 +105,7 @@ export default function Home() {
                         handle={post.handle}
                         timestamp={post.timestamp}
                         content={post.content}
-                        mediaUrl={post.mediaUrl}
+                        mediaUrls={post.mediaUrl}
                         likes={post.likes}
                         retweets={post.retweets}
                         replies={post.replies}
