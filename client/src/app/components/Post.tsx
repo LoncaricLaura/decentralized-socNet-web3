@@ -34,7 +34,7 @@ export default function Post({
 }: PostProps) {
 
   return (
-    <div className="relative bg-[#E8EAF7]/10 rounded-md shadow-md p-4 mb-4 hover:shadow-lg">
+    <div className="relative bg-[#E8EAF7]/10 rounded-md shadow-md p-4 mb-4 hover:shadow-lg h-auto">
       <div className="flex items-start space-x-4">
         <Image
           src={avatarUrl}
