@@ -58,7 +58,7 @@ export default function Header() {
           />
           <p className="hidden sm:flex">Home</p>
         </Link>
-        <Link href={`/profile`} className="flex flex-row items-end gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
+        <Link href={`/profile/${accountData.address}`} className="flex flex-row items-end gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
           <Image
             src="/images/icon-profile.png"
             alt="Icon Profile"

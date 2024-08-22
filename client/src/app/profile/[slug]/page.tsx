@@ -1,17 +1,20 @@
 'use client'
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import Post from "../components/Post";
-import EditProfile from "../components/EditProfile";
-import AddPost from "../components/AddPost";
-import { getFile, getIPFSUrl, getIPFSUrls } from '../ipfs';
-import { PROFILE_ABI, PROFILE_ADDRESS, POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
+import { useEffect, useRef, useState } from "react";
+import Post from "../../components/Post";
+import EditProfile from "../../components/EditProfile";
+import AddPost from "../../components/AddPost";
+import { getFile, getIPFSUrl, getIPFSUrls } from '../../ipfs';
+import { PROFILE_ABI, PROFILE_ADDRESS, POST_ABI, POST_ADDRESS } from '../../../../../context/Constants';
 import { ethers } from 'ethers';
+import { useParams } from "next/navigation";
 
 declare var window: any
 
 export default function Profile() {
+  const { slug } = useParams();
+  const [currentUserAddress, setCurrentUserAddress] = useState('');
   const [showModalEdit, setShowModalEdit] = useState(false);
   const [showModalPost, setShowModalPost] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -33,7 +36,8 @@ export default function Profile() {
           const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
 
           const userAddress = await signer.getAddress();
-          const userData = await profileContract.getUser(userAddress);
+          setCurrentUserAddress(userAddress.toLowerCase());
+          const userData = await profileContract.getUser(slug);
 
           if (userData) {
             setProfileData({
@@ -45,21 +49,21 @@ export default function Profile() {
             console.log("User not registered or no data found.");
           }
 
-          const postIds = await postContract.getUserPosts(userAddress);
-
+          const postIds = await postContract.getUserPosts(slug);
+          
           const posts = await Promise.all(
             postIds.map(async (postId: any) => {
               const postData = await postContract.getPost(postId);
-
+              
               const postJson = await getFile(postData.postCid);
               const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
 
+              
               return {
-                username: profileData.name,
-                handle: profileData.name.toLowerCase().replace(/\s+/g, ''),
+                postId: Number(postId),
                 timestamp: new Date(Number(postData.timestamp) * 1000),
                 content: parsedPost.content,
-                mediaUrl: getIPFSUrls(parsedPost.media)
+                mediaUrl: getIPFSUrls(parsedPost.media),
               };
             })
           )
@@ -73,7 +77,7 @@ export default function Profile() {
     };
 
     fetchProfileData();
-  }, [profileData.name]);
+  }, [slug]);
 
   const profileImageUrl = getIPFSUrl(profileData.profileImageCid);
 
@@ -109,34 +113,38 @@ export default function Profile() {
                 </div>
             </div>
         </div>
-        <div className="pt-5 flex justify-end items-center gap-x-6">
-          <button
-              className="w-fit flex gap-1"
-              onClick={toggleModalEdit}
-            >
-              <Image
-                src="/icons/icon-edit.png"
-                alt="Icon Edit"
-                width={15}
-                height={15}
-                priority
-              />
-              <p className="text-sm">Edit profile</p>
-            </button>
-          <button
-              className="w-fit flex items-center gap-1"
-              onClick={toggleModalPost}
-            >
-              <Image
-                src="/icons/icon-add.svg"
-                alt="Icon Add"
-                width={12}
-                height={12}
-                priority
-              />
-              <p className="text-sm">Add post</p>
-            </button>
-        </div>
+        {
+          currentUserAddress === slug && (
+            <div className="pt-5 flex justify-end items-center gap-x-6">
+              <button
+                  className="w-fit flex gap-1"
+                  onClick={toggleModalEdit}
+                >
+                  <Image
+                    src="/icons/icon-edit.png"
+                    alt="Icon Edit"
+                    width={15}
+                    height={15}
+                    priority
+                  />
+                  <p className="text-sm">Edit profile</p>
+                </button>
+              <button
+                  className="w-fit flex items-center gap-1"
+                  onClick={toggleModalPost}
+                >
+                  <Image
+                    src="/icons/icon-add.svg"
+                    alt="Icon Add"
+                    width={12}
+                    height={12}
+                    priority
+                  />
+                  <p className="text-sm">Add post</p>
+                </button>
+            </div>
+          )
+        }
         <div className="pt-16 flex flex-col md:flex-row justify-center gap-10 w-full max-w-full md:max-w-[80%] 3xl:max-w-[70%]">
                 <div className="relative md:sticky top-0 md:top-32 flex flex-col items-start justify-center h-full text-center pb-12 md:pb-16 w-full md:w-[20%] border-b md:border-b-0 md:border-r border-[#d1e3fa] mt-0 md:mt-0">
                     <p className="mt-2 mr-4 lg:mr-0 text-sm text-gray-400 text-start text-wrap">{profileData.description}</p>
@@ -145,10 +153,11 @@ export default function Profile() {
                 {userPosts.length > 0 ? (
                   userPosts.map((post, index) => (
                     <Post
+                        postId={post.postId}
                         key={index}
                         avatarUrl={profileImageUrl}
-                        username={post.username}
-                        handle={post.handle}
+                        username={profileData.name}
+                        handle={profileData.name.toLowerCase()}
                         timestamp={post.timestamp}
                         content={post.content}
                         mediaUrls={post.mediaUrl}

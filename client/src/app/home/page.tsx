@@ -5,7 +5,7 @@ import Image from "next/image";
 import { getFile, getIPFSUrl, getIPFSUrls } from '../ipfs';
 import { PROFILE_ABI, PROFILE_ADDRESS, POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
 import { ethers } from 'ethers';
-import { Key, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import AddPost from "../components/AddPost";
 import { useRouter } from "next/navigation";
 
@@ -18,14 +18,25 @@ export default function Home() {
     description: "",
     profileImageCid: "",
   });
-  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [currentUserAddress, setCurrentUserAddress] = useState(''); 
+  // const [userPosts, setUserPosts] = useState<any[]>([]);
   const [showModalPost, setShowModalPost] = useState(false);
+  const [allPosts, setAllPosts] = useState<any[]>([]);
 
   const toggleModalPost = () => {
     setShowModalPost(!showModalPost);
   };
 
-// TODO: change function -> all posts will be displayed here
+  async function fetchUserProfile(address: string) {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, signer);
+  
+    const userData = await profileContract.getUser(address);
+    return userData;
+  }
+  
+
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
@@ -37,6 +48,7 @@ export default function Home() {
           const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
 
           const userAddress = await signer.getAddress();
+          setCurrentUserAddress(userAddress.toLowerCase());
           const userData = await profileContract.getUser(userAddress);
 
           if (userData) {
@@ -49,26 +61,38 @@ export default function Home() {
             console.log("User not registered or no data found.");
           }
 
-          const postIds = await postContract.getUserPosts(userAddress);
+          const [postIds, authors, postCids, timestamps, likes] = await postContract.getAllPosts();
 
-          const posts = await Promise.all(
-            postIds.map(async (postId: any) => {
-              const postData = await postContract.getPost(postId);
+          const usersAvatars = authors.map(async (author: string) => {
+            const userProfile = await fetchUserProfile(author);
+            return {
+              address: author.toLowerCase(),
+              avatarUrl: getIPFSUrl(userProfile.profileImageCid),
+            };
+          });
+  
+          const avatars = await Promise.all(usersAvatars);
+          const avatarMap = new Map(avatars.map(avatar => [avatar.address, avatar.avatarUrl]));
 
-              const postJson = await getFile(postData.postCid);
-              const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
+          const posts = postIds.map(async (postId: any, index: number) => {
+            const postJson = await getFile(postCids[index]);
+            const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
 
-              return {
-                username: profileData.name,
-                handle: profileData.name.toLowerCase().replace(/\s+/g, ''),
-                timestamp: new Date(Number(postData.timestamp) * 1000),
-                content: parsedPost.content,
-                mediaUrl: getIPFSUrls(parsedPost.media)
-              };
-            })
-          )
-          posts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-          setUserPosts(posts);
+            return {
+              postId: postId.toString(),
+              username: authors[index],
+              handle: authors[index].toLowerCase(),
+              timestamp: new Date(Number(timestamps[index]) * 1000),
+              content: parsedPost.content,
+              mediaUrl: getIPFSUrls(parsedPost.media),
+              likes: likes[index],
+              avatarUrl: avatarMap.get(authors[index].toLowerCase()) || ''
+            };
+          });
+          const resolvedPosts = await Promise.all(posts);
+
+          resolvedPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          setAllPosts(resolvedPosts);
         }
       } catch (error) {
         console.error("Error fetching profile data:", error);
@@ -92,15 +116,16 @@ export default function Home() {
               width={50}
               height={50}
               className="rounded-full shadow-md shadow-gray-800 cursor-pointer"
-              onClick={() => router.push('/profile')}
+              onClick={() => router.push(`/profile/${currentUserAddress}`)}
             />
             <textarea name="content" rows={2} cols={50} placeholder={`Share your thoughts, ${profileData.name}`} className="cursor-pointer bg-[#e1e4f5]/50 rounded-full w-full placeholder:pl-2 placeholder:text-gray-800" onClick={toggleModalPost}></textarea>
           </div>
-        {userPosts.length > 0 ? (
-                  userPosts.map((post, index) => (
+        {allPosts.length > 0 ? (
+                  allPosts.map((post, index) => (
                     <Post
+                        postId={post.postId}
                         key={index}
-                        avatarUrl={profileImageUrl}
+                        avatarUrl={post.avatarUrl}
                         username={post.username}
                         handle={post.handle}
                         timestamp={post.timestamp}
