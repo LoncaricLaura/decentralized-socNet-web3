@@ -6,7 +6,6 @@ contract Profile {
         string name;
         string description;
         string profileImageCid;
-        // bytes32 encryptedData;
         uint256 lastUpdated;
     }
 
@@ -27,29 +26,24 @@ contract Profile {
     }
     
     function registerUser(string memory _name, string memory _description, string memory _profileImageCid) public {
-        // require(users[msg.sender].encryptedData == 0, "User already registered");
         users[msg.sender] = User({
             name: _name,
             description: _description,
             profileImageCid: _profileImageCid,
-            // encryptedData: _encryptedData,
             lastUpdated: block.timestamp
         });
         emit UserRegistered(msg.sender, _name, _description, _profileImageCid);
     }
     
     function updateUser(string memory _name, string memory _description, string memory _profileImageCid) public {
-        // require(users[msg.sender].encryptedData != 0, "User not registered");
         users[msg.sender].name = _name;
         users[msg.sender].description = _description;
         users[msg.sender].profileImageCid = _profileImageCid;
-        // users[msg.sender].encryptedData = _encryptedData;
         users[msg.sender].lastUpdated = block.timestamp;
         emit UserUpdated(msg.sender, _name, _description, _profileImageCid);
     }
     
     function getUser(address userAddress) public view returns (string memory name, string memory description, string memory profileImageCid) {
-        // require(users[userAddress].encryptedData != 0, "User not found");
         return (users[userAddress].name, users[userAddress].description, users[userAddress].profileImageCid);
     }
     
@@ -63,7 +57,6 @@ contract Profile {
     }
 
     function deleteUser() public {
-        // require(users[msg.sender].encryptedData != 0, "User not registered");
         delete users[msg.sender];
         emit UserDeleted(msg.sender);
     }
