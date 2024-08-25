@@ -28,7 +28,10 @@ export default function Home() {
         const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, signer);
 
         const userData = await profileContract.getUser(address);
-        return userData;
+        return {
+            name: userData.name,
+            profileImageCid: userData.profileImageCid,
+        };
     }
 
     useEffect(() => {
@@ -40,29 +43,34 @@ export default function Home() {
 
                 const [postIds, authors, postCids, timestamps, likes] = await postContract.getAllPosts();
 
-                const avatars = await Promise.all(authors.map(async (author: string) => {
+                const allUsersProfiles = await Promise.all(authors.map(async (author: string) => {
                     const userProfile = await fetchUserProfile(author);
                     return {
                         address: author.toLowerCase(),
                         avatarUrl: getIPFSUrl(userProfile.profileImageCid),
+                        name: userProfile.name,
                     };
                 }));
 
-                const avatarMap = new Map(avatars.map((avatar: any) => [avatar.address, avatar.avatarUrl]));
+                const profileMap = new Map(allUsersProfiles.map((profile: any) => [profile.address, profile]));
 
                 const posts = await Promise.all(postIds.map(async (postId: any, index: number) => {
                     const postJson = await getFile(postCids[index]);
                     const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
 
+                    const authorAddress = authors[index].toLowerCase();
+                    const authorProfile = profileMap.get(authorAddress);
+
                     return {
                         postId: postId.toString(),
-                        username: authors[index],
-                        handle: authors[index].toLowerCase(),
+                        address: authorAddress,
+                        username: authorProfile?.name || authors[index],
+                        handle: authorProfile?.name || authors[index],
                         timestamp: new Date(Number(timestamps[index]) * 1000),
                         content: parsedPost.content,
                         mediaUrl: getIPFSUrls(parsedPost.media),
                         likes: likes[index],
-                        avatarUrl: avatarMap.get(authors[index].toLowerCase()) || ''
+                        avatarUrl: authorProfile?.avatarUrl || '',
                     };
                 }));
 
@@ -108,17 +116,19 @@ export default function Home() {
                     {allPosts.length > 0 ? (
                         allPosts.map((post, index) => (
                             <Post
-                            postId={post.postId}
-                            key={index}
-                            avatarUrl={post.avatarUrl}
-                            username={post.username}
-                            handle={post.handle}
-                            timestamp={post.timestamp}
-                            content={post.content}
-                            mediaUrls={post.mediaUrl}
-                            likes={post.likes} 
-                            retweets={0} 
-                            replies={0}                            />
+                                postId={post.postId}
+                                key={index}
+                                avatarUrl={post.avatarUrl}
+                                username={post.username}
+                                address={post.address}
+                                handle={post.handle}
+                                timestamp={post.timestamp}
+                                content={post.content}
+                                mediaUrls={post.mediaUrl}
+                                likes={post.likes} 
+                                retweets={0} 
+                                replies={0}
+                            />
                         ))
                     ) : (
                         <p className="text-center text-gray-400">No posts yet.</p>

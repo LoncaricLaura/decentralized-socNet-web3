@@ -15,6 +15,7 @@ interface PostProps {
   postId: number;
   avatarUrl: string;
   username: string;
+  address: string,
   handle: string;
   timestamp: Date;
   content: string;
@@ -28,6 +29,7 @@ export default function Post({
   postId,
   avatarUrl,
   username,
+  address,
   handle,
   timestamp,
   content,
@@ -36,7 +38,7 @@ export default function Post({
 }: PostProps) {
 
   const router = useRouter();
-  const slug = username.toLowerCase();
+  const slug = address.toLowerCase();
   const changeRoute = () => {
     router.push(`profile/${slug}`);
   }
@@ -54,9 +56,9 @@ export default function Post({
         />
         <div className="relative w-full max-w-[80%]">
           <div className="flex justify-between text-[#e8f0fa]">
-            <div className="flex flex-col items-center max-w-fit cursor-pointer truncate" onClick={changeRoute}>
+            <div className="flex flex-col items-start max-w-fit cursor-pointer truncate" onClick={changeRoute}>
               <p className="font-bold">{username}</p>
-              <p className="text-sm ml-1">@{handle}</p>
+              <p className="text-sm ml-1">@{handle.toLowerCase()}</p>
             </div>
             <ReactTimeAgo date={timestamp} locale="en-US" className="text-sm"/>
           </div>

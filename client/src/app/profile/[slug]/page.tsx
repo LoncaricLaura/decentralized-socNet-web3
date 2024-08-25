@@ -30,7 +30,7 @@ export default function Profile() {
           if (profile) {
             setUserProfileData(profile);
           }
-
+          
           const posts = await getUserPosts(slug as '');
           posts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
           setUserPosts(posts);
@@ -120,6 +120,7 @@ export default function Profile() {
                         key={index}
                         avatarUrl={profileImageUrl}
                         username={userProfileData.name}
+                        address={slug as ''}
                         handle={userProfileData.name.toLowerCase()}
                         timestamp={post.timestamp}
                         content={post.content}
