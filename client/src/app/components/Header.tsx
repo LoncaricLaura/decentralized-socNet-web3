@@ -1,23 +1,16 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import Image from "next/image";
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import MobileMenu from "./MobileMenu";
-import { AccountType } from "./ConnectToWallet";
+import { AppContext } from "../context/AppContext";
 
-interface HeaderProps extends AccountType {}
 
 export default function Header() {
-  const [accountData, setAccountData] = useState<HeaderProps>({});
+  const { accountData } = useContext(AppContext);
   const [mobMenuOpen, setMobMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const storedData = localStorage.getItem('accountData');
-    if (storedData) {
-      setAccountData(JSON.parse(storedData));
-    }
-  }, []);
 
   const pathname = usePathname();
 
@@ -58,7 +51,7 @@ export default function Header() {
           />
           <p className="hidden sm:flex">Home</p>
         </Link>
-        <Link href={`/profile/${accountData.address}`} className="flex flex-row items-end gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
+        <Link href={`/profile/${accountData?.address}`} className="flex flex-row items-end gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
           <Image
             src="/images/icon-profile.png"
             alt="Icon Profile"
@@ -81,7 +74,7 @@ export default function Header() {
       </div>
 
       <div className={`px-2 mx-2 max-w-24 truncate ${hiddenClass}`}>
-        <span className="hidden md:flex">🟢 {accountData.address ?? "Wallet Address"}</span>
+        <span className="hidden md:flex">🟢 {accountData?.address}</span>
       </div>
       <div className={`md:hidden flex items-center ${hiddenClass}`}>
         <button className="btn ml-4 flex flex-col" aria-label="Menu" onClick={toggleMobMenu}>

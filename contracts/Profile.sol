@@ -34,6 +34,10 @@ contract Profile {
         });
         emit UserRegistered(msg.sender, _name, _description, _profileImageCid);
     }
+
+    function isUserRegistered(address userAddress) public view returns (bool) {
+        return bytes(users[userAddress].name).length > 0;
+    }
     
     function updateUser(string memory _name, string memory _description, string memory _profileImageCid) public {
         users[msg.sender].name = _name;

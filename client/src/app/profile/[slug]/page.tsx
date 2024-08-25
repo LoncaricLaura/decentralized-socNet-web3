@@ -1,23 +1,21 @@
 'use client'
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Post from "../../components/Post";
 import EditProfile from "../../components/EditProfile";
 import AddPost from "../../components/AddPost";
-import { getFile, getIPFSUrl, getIPFSUrls } from '../../ipfs';
-import { PROFILE_ABI, PROFILE_ADDRESS, POST_ABI, POST_ADDRESS } from '../../../../../context/Constants';
-import { ethers } from 'ethers';
+import { getIPFSUrl } from '../../ipfs';
 import { useParams } from "next/navigation";
+import { AccountType, AppContext } from "@/app/context/AppContext";
 
-declare var window: any
 
 export default function Profile() {
   const { slug } = useParams();
-  const [currentUserAddress, setCurrentUserAddress] = useState('');
+  const { accountData, fetchUserProfile, getUserPosts } = useContext(AppContext);
   const [showModalEdit, setShowModalEdit] = useState(false);
   const [showModalPost, setShowModalPost] = useState(false);
-  const [profileData, setProfileData] = useState({
+  const [userProfileData, setUserProfileData] = useState({
     name: "",
     description: "",
     profileImageCid: "",
@@ -25,61 +23,26 @@ export default function Profile() {
   const [userPosts, setUserPosts] = useState<any[]>([]);
 
   useEffect(() => {
-    
     const fetchProfileData = async () => {
       try {
-        const ethereum = window.ethereum;
-        if (ethereum) {
-          const provider = new ethers.BrowserProvider(ethereum);
-          const signer = await provider.getSigner();
-          const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, signer);
-          const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
-
-          const userAddress = await signer.getAddress();
-          setCurrentUserAddress(userAddress.toLowerCase());
-          const userData = await profileContract.getUser(slug);
-
-          if (userData) {
-            setProfileData({
-              name: userData.name,
-              description: userData.description,
-              profileImageCid: userData.profileImageCid,
-            });
-          } else {
-            console.log("User not registered or no data found.");
+        if (slug) {
+          const profile = await fetchUserProfile(slug as '');
+          if (profile) {
+            setUserProfileData(profile);
           }
 
-          const postIds = await postContract.getUserPosts(slug);
-          
-          const posts = await Promise.all(
-            postIds.map(async (postId: any) => {
-              const postData = await postContract.getPost(postId);
-              
-              const postJson = await getFile(postData.postCid);
-              const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
-
-              
-              return {
-                postId: Number(postId),
-                timestamp: new Date(Number(postData.timestamp) * 1000),
-                content: parsedPost.content,
-                mediaUrl: getIPFSUrls(parsedPost.media),
-              };
-            })
-          )
+          const posts = await getUserPosts(slug as '');
           posts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
           setUserPosts(posts);
-          console.log('2. posts', posts);
         }
       } catch (error) {
-        console.error("Error fetching profile data:", error);
+        console.error("Error fetching profile data: ", error);
       }
     };
-
     fetchProfileData();
-  }, [slug]);
+  }, [slug, fetchUserProfile, getUserPosts]); 
 
-  const profileImageUrl = getIPFSUrl(profileData.profileImageCid);
+  const profileImageUrl = getIPFSUrl(userProfileData.profileImageCid);
 
   const toggleModalEdit = () => {
     setShowModalEdit(!showModalEdit);
@@ -108,13 +71,13 @@ export default function Profile() {
                   </div>
                 )}
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-xl font-bold text-white">{profileData.name}</h1>
-                    <p className="text-md text-gray-300">@{profileData.name.toLowerCase().replace(/\s+/g, '')}</p>
+                    <h1 className="text-xl font-bold text-white">{userProfileData.name}</h1>
+                    <p className="text-md text-gray-300">@{userProfileData.name.toLowerCase().replace(/\s+/g, '')}</p>
                 </div>
             </div>
         </div>
         {
-          currentUserAddress === slug && (
+          accountData?.address === slug && (
             <div className="pt-5 flex justify-end items-center gap-x-6">
               <button
                   className="w-fit flex gap-1"
@@ -147,7 +110,7 @@ export default function Profile() {
         }
         <div className="pt-16 flex flex-col md:flex-row justify-center gap-10 w-full max-w-full md:max-w-[80%] 3xl:max-w-[70%]">
                 <div className="relative md:sticky top-0 md:top-32 flex flex-col items-start justify-center h-full text-center pb-12 md:pb-16 w-full md:w-[20%] border-b md:border-b-0 md:border-r border-[#d1e3fa] mt-0 md:mt-0">
-                    <p className="mt-2 mr-4 lg:mr-0 text-sm text-gray-400 text-start text-wrap">{profileData.description}</p>
+                    <p className="mt-2 mr-4 lg:mr-0 text-sm text-gray-400 text-start text-wrap">{userProfileData.description}</p>
                 </div>
             <div className="flex flex-col w-full md:w-[65%] py-b md:pb-16">
                 {userPosts.length > 0 ? (
@@ -156,8 +119,8 @@ export default function Profile() {
                         postId={post.postId}
                         key={index}
                         avatarUrl={profileImageUrl}
-                        username={profileData.name}
-                        handle={profileData.name.toLowerCase()}
+                        username={userProfileData.name}
+                        handle={userProfileData.name.toLowerCase()}
                         timestamp={post.timestamp}
                         content={post.content}
                         mediaUrls={post.mediaUrl}
@@ -172,8 +135,8 @@ export default function Profile() {
             </div>
         </div>
       </div>
-      {showModalEdit && <EditProfile setShowModal={setShowModalEdit} profileData={profileData} />}
-      {showModalPost && <AddPost setShowModal={setShowModalPost} profileData={profileData} />}
+      {showModalEdit && <EditProfile setShowModal={setShowModalEdit} profileData={userProfileData} />}
+      {showModalPost && <AddPost setShowModal={setShowModalPost} profileData={userProfileData} />}
     </main>
   );
 }

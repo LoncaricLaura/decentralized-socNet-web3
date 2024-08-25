@@ -1,8 +1,8 @@
 'use client'
 import { useRouter  } from "next/navigation";
-import { useCallback } from "react";
+import { useContext } from "react";
 import Image from 'next/image';
-import { ethers } from "ethers";
+import { AppContext } from "../context/AppContext";
 
 export interface AccountType {
   address?: string;
@@ -16,40 +16,8 @@ interface ConnectToWalletProps {
   setAccountData?: React.Dispatch<React.SetStateAction<AccountType>>;
 }
 
-declare var window: any
-
 export default function ConnectToWallet({ setShowModal, setAccountData }: ConnectToWalletProps) {
-  const router = useRouter();
-
-  const _connectToMetaMask = useCallback(async () => {
-    const ethereum = window.ethereum;
-    if (typeof ethereum !== "undefined") {
-      try {
-        const accounts = await ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        const address = accounts[0];
-        const provider = new ethers.BrowserProvider(ethereum);
-        const balance = await provider.getBalance(address);
-        const network = await provider.getNetwork();
-
-        const accountData = {
-          address,
-          balance: ethers.formatEther(balance),
-          chainId: network.chainId.toString(),
-          network: network.name,
-        };
-        
-        setAccountData?.(accountData);
-        localStorage.setItem('accountData', JSON.stringify(accountData));
-        router.push('/home');
-      } catch (error: Error | any) {
-        alert(`Error connecting to MetaMask: ${error?.message ?? error}`);
-      }
-    } else {
-      alert("MetaMask not installed");
-    }
-  }, [setAccountData, router]);
+  const { connectToMetaMask } = useContext(AppContext);
 
   const closeModal = () => {
     setShowModal(false);
@@ -78,7 +46,7 @@ export default function ConnectToWallet({ setShowModal, setAccountData }: Connec
                 height={50}
                 priority
               />
-              <button onClick={_connectToMetaMask} className="text-[#121212] text-md">
+              <button onClick={connectToMetaMask} className="text-[#121212] text-md">
                 Connect to MetaMask
               </button>
            </div>

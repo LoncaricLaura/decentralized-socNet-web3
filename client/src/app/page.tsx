@@ -1,12 +1,9 @@
 'use client'
 
-import { useRouter } from "next/navigation";
 import ConnectToWallet from "./components/ConnectToWallet";
 import { useState } from "react";
-import Image from "next/image";
 
 export default function Login() {
-  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
 
   const toggleModal = () => {
