@@ -54,3 +54,12 @@ export function getIPFSUrl(cid: string): string {
 export function getIPFSUrls(cids: string[]): string[] {
   return cids.map(cid => `http://localhost:8080/ipfs/${cid}`);
 }
+
+export async function removePinnedData(cid: string) {
+  try {
+    await ipfsClient.pin.rm(cid);
+    console.log("Unpinned CID:", cid);
+  } catch (error) {
+    console.error("Error unpinning data: ", error);
+  }
+}

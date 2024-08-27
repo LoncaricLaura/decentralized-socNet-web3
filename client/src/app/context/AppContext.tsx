@@ -33,9 +33,12 @@ export interface ProfileType {
 
 export interface PostType {
   postId: number;
+  postCid: string;
   timestamp: Date;
   content: string;
   mediaUrl: string[];
+  likes: number;
+  hidden: boolean;
 }
 
 const AppProvider = ({ children}: { children: React.ReactNode}) => {
@@ -114,20 +117,22 @@ const AppProvider = ({ children}: { children: React.ReactNode}) => {
       const provider = new ethers.BrowserProvider(ethereum);
       const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, provider);
       const postIds = await postContract.getUserPosts(address);
-
+      
       return await Promise.all(
-          postIds.map(async (postId: any) => {
-              const postData = await postContract.getPost(postId);
-              const postJson = await getFile(postData.postCid);
-              const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
+        postIds.map(async (postId: any) => {
+          const postData = await postContract.getPost(postId);
+          const postJson = await getFile(postData.postCid);
+          const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
               return {
-                  postId: Number(postId),
+                  postId,
+                  postCid: postData.postCid,
                   timestamp: new Date(Number(postData.timestamp) * 1000),
                   content: parsedPost.content,
                   mediaUrl: getIPFSUrls(parsedPost.media),
+                  likes: parsedPost.likes,
+                  hidden: postData.hidden
               };
-          })
-      );
+          }));
   };
 
 // update or clear data if account is changed or disconnected

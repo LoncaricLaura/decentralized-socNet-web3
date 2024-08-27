@@ -7,7 +7,7 @@ import EditProfile from "../../components/EditProfile";
 import AddPost from "../../components/AddPost";
 import { getIPFSUrl } from '../../ipfs';
 import { useParams } from "next/navigation";
-import { AccountType, AppContext } from "@/app/context/AppContext";
+import { PostType, AppContext } from "@/app/context/AppContext";
 
 
 export default function Profile() {
@@ -20,7 +20,7 @@ export default function Profile() {
     description: "",
     profileImageCid: "",
   });
-  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [userPosts, setUserPosts] = useState<PostType[]>();
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -30,10 +30,20 @@ export default function Profile() {
           if (profile) {
             setUserProfileData(profile);
           }
-          
+
+          if (profile?.name === '') {
+            setShowModalEdit(true);
+          }
+
           const posts = await getUserPosts(slug as '');
-          posts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-          setUserPosts(posts);
+          if (accountData?.address === slug) {
+            posts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+            setUserPosts(posts);
+          } else {
+            const filteredPosts = posts.filter((post: any) => !post.hidden);
+            filteredPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+            setUserPosts(filteredPosts);
+          }
         }
       } catch (error) {
         console.error("Error fetching profile data: ", error);
@@ -113,10 +123,11 @@ export default function Profile() {
                     <p className="mt-2 mr-4 lg:mr-0 text-sm text-gray-400 text-start text-wrap">{userProfileData.description}</p>
                 </div>
             <div className="flex flex-col w-full md:w-[65%] py-b md:pb-16">
-                {userPosts.length > 0 ? (
-                  userPosts.map((post, index) => (
+                {(userPosts ?? []).length > 0 ? (
+                  userPosts?.map((post, index) => (
                     <Post
                         postId={post.postId}
+                        postCid={post.postCid}
                         key={index}
                         avatarUrl={profileImageUrl}
                         username={userProfileData.name}
@@ -126,8 +137,7 @@ export default function Profile() {
                         content={post.content}
                         mediaUrls={post.mediaUrl}
                         likes={post.likes}
-                        retweets={post.retweets}
-                        replies={post.replies}
+                        hidden={post.hidden}
                     />
                 ))
               ) : (

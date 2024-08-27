@@ -7,6 +7,7 @@ contract Post {
         string postCid;
         uint256 timestamp;
         uint256 likes;
+        bool hidden;
     }
 
     mapping(uint256 => PostData) private posts;
@@ -24,6 +25,9 @@ contract Post {
 
     event PostLiked(uint256 indexed postId, address indexed liker);
 
+    event PostHidden(uint256 indexed postId, address indexed author);
+    event PostShown(uint256 indexed postId, address indexed author);
+
     constructor() {
         nextPostId = 1;
     }
@@ -34,7 +38,8 @@ contract Post {
             author: msg.sender,
             postCid: _postCid,
             timestamp: block.timestamp,
-            likes: 0
+            likes: 0,
+            hidden: false
         });
 
         userPosts[msg.sender].push(postId);
@@ -52,6 +57,24 @@ contract Post {
         emit PostLiked(_postId, msg.sender);
     }
 
+    function hidePost(uint256 _postId) public {
+        require(_postId < nextPostId, "Post doesn't exist");
+        require(posts[_postId].author == msg.sender, "Only author can hide this post!");
+
+        posts[_postId].hidden = true;
+
+        emit PostHidden(_postId, msg.sender);
+    }
+
+    function showPost(uint256 _postId) public {
+        require(_postId < nextPostId, "Post doesn't exist");
+        require(posts[_postId].author == msg.sender, "Only author can show this post!");
+
+        posts[_postId].hidden = false;
+
+        emit PostShown(_postId, msg.sender);
+    }
+
     function getPost(uint256 _postId)
         public
         view
@@ -59,13 +82,14 @@ contract Post {
             address author,
             string memory postCid,
             uint256 timestamp,
-            uint256 likes
+            uint256 likes,
+            bool hidden
         )
     {
         require(_postId < nextPostId, "Post does not exist");
 
         PostData storage post = posts[_postId];
-        return (post.author, post.postCid, post.timestamp, post.likes);
+        return (post.author, post.postCid, post.timestamp, post.likes, post.hidden);
     }
 
     function getUserPosts(address _user)
@@ -84,7 +108,8 @@ contract Post {
             address[] memory authors,
             string[] memory postCids,
             uint256[] memory timestamps,
-            uint256[] memory likes
+            uint256[] memory likes,
+            bool[] memory hidden
         )
     {
         uint256 totalPosts = nextPostId - 1;
@@ -93,6 +118,7 @@ contract Post {
         postCids = new string[](totalPosts);
         timestamps = new uint256[](totalPosts);
         likes = new uint256[](totalPosts);
+        hidden = new bool[](totalPosts);
 
         for (uint256 i = 1; i <= totalPosts; i++) {
             PostData storage post = posts[i];
@@ -101,6 +127,7 @@ contract Post {
             postCids[i - 1] = post.postCid;
             timestamps[i - 1] = post.timestamp;
             likes[i - 1] = post.likes;
+            hidden[i - 1] = post.hidden;
         }
     }
 
