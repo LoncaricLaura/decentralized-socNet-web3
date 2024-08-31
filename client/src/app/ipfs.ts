@@ -1,6 +1,6 @@
 import { create } from 'ipfs-http-client';
 
-const ipfsClient = create({ url: "http://localhost:5001" });
+export const ipfsClient = create({ url: "http://localhost:5001" });
 
 export async function addFile(file: File): Promise<string> {
   try {

@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { useState } from "react";
 import UploadFile from '../components/UploadFile'
-import { addFile } from '../ipfs'
+import { addFile, getIPFSUrl } from '../ipfs'
 import { ethers } from 'ethers';
 import { PROFILE_ABI, PROFILE_ADDRESS } from '../../../../context/Constants';
 
@@ -17,6 +17,7 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [name, setName] = useState<string>(profileData.name || '');
   const [description, setDescription] = useState<string>(profileData.description || '');
+  const [profileImage, setProfileImage] = useState<string>(profileData.profileImageCid || '');
 
   const closeModal = () => {
     setShowModal(false);
@@ -24,7 +25,7 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
 
   const uploadFiles = async () => {
     try {
-      let profileImageCid = '';
+      let profileImageCid = profileImage;
       if (selectedFiles.length > 0) {
         profileImageCid = await addFile(selectedFiles[0]);
         console.log(`Uploaded file CID: ${profileImageCid}`);
@@ -65,6 +66,8 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
     uploadFiles();
   };
 
+  const profileImageUrl = getIPFSUrl(profileImage);
+
     return (
       <main className="fixed flex items-center justify-center top-0 left-0 z-40 m-auto w-full h-full bg-[#121212]/85">
         <div className="relative w-[85%] sm:w-1/2 lg:w-1/2 2xl:w-1/3 h-3/4 overflow-auto bg-[#cfcccc] rounded-md px-4 py-8 flex flex-col gap-6">
@@ -92,10 +95,9 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
                     <textarea name="description" rows={2} cols={50} value={description} placeholder="Bio or description about the user" onChange={(e) => setDescription(e.target.value)}></textarea>
                 </div>
 
-                <div className="flex">
-                    <UploadFile files={selectedFiles} setFiles={setSelectedFiles} txt="Upload your image" isRequired={true} />
+                <div className="flex flex-col items-center">
+                  <UploadFile files={selectedFiles} setFiles={setSelectedFiles} txt="Upload your image" isRequired={true} />
                 </div>
-
             </form>
             <button 
               className="font-bold px-4 py-2 text-sm md:text-md bg-gradient-to-r from-[#7ca3f0]/60 to-[#4a90e2]/60 text-[#121212] rounded-md min-w-20 md:min-w-32 w-fit" 

@@ -71,7 +71,7 @@ export default function Home() {
                 console.error("Error fetching posts:", error);
             }
         };
-    
+        
         fetchAllPosts();
     }, []);
     
@@ -85,8 +85,8 @@ export default function Home() {
         <main className="relative flex flex-row min-h-screen">
             <div className="flex justify-start gap-10 px-4 sm:px-16 2xl:px-24 py-16 w-full">
                 <Menu />
-                <div className="w-full md:w-[80%] xl:w-[50%] pt-16">
-                    <div className="flex items-start gap-3 w-full h-fit px-4 rounded-md mb-10">
+                <div className="w-full md:w-[50%] pt-16">
+                    <div className="flex items-start gap-3 w-full h-fit px-0 md:px-4 rounded-md mb-10">
                         <Image
                             src={profileImageUrl}
                             alt={`${profileData.name}'s avatar`}

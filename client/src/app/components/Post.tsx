@@ -8,7 +8,7 @@ import LikeButton from "./LikeButton";
 import { usePathname, useRouter } from "next/navigation";
 import { AppContext } from "../context/AppContext";
 import en from 'javascript-time-ago/locale/en'
-import DeletePostModal from "./HidePostModal";
+import HidePostModal from "./HidePostModal";
 import { ethers } from "ethers";
 import { POST_ADDRESS, POST_ABI } from "../../../../context/Constants";
 import { removePinnedData } from "../ipfs";
@@ -135,7 +135,7 @@ export default function Post({
         </div>
       </div>
       
-      {showModalHide && <DeletePostModal setShowModal={setShowModalHide} postCid={postCid} postId={postId} />}
+      {showModalHide && <HidePostModal setShowModal={setShowModalHide} postCid={postCid} postId={postId} />}
     </div>
   );
 }
