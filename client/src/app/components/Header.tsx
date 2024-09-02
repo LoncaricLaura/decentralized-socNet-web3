@@ -73,8 +73,8 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className={`px-2 mx-2 max-w-24 truncate hidden md:flex ${hiddenClass}`}>
-        <span className="">🟢 {accountData?.address}</span>
+      <div className={`px-2 mx-2 max-w-24 truncate ${hiddenClass}`}>
+        <span className="hidden md:flex">🟢 {accountData?.address}</span>
       </div>
       <div className={`md:hidden flex items-center ${hiddenClass}`}>
         <button className="btn ml-4 flex flex-col" aria-label="Menu" onClick={toggleMobMenu}>

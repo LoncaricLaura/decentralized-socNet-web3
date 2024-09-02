@@ -8,6 +8,7 @@ import AddPost from "../../components/AddPost";
 import { getIPFSUrl } from '../../ipfs';
 import { useParams } from "next/navigation";
 import { PostType, AppContext } from "@/app/context/AppContext";
+import Link from "next/link";
 
 
 export default function Profile() {
@@ -87,7 +88,7 @@ export default function Profile() {
             </div>
         </div>
         {
-          accountData?.address === slug && (
+          accountData?.address === slug ? (
             <div className="pt-5 flex justify-end items-center gap-x-6">
               <button
                   className="w-fit flex gap-1"
@@ -116,6 +117,22 @@ export default function Profile() {
                   <p className="text-sm">Add post</p>
                 </button>
             </div>
+          ) : (
+            <div className="pt-5 flex justify-end items-center gap-x-6">
+            <Link
+              href={`/messages/${slug}`}
+              className="w-fit flex items-center gap-1"
+            >
+              <Image
+                src="/icons/icon-send.png"
+                alt="Icon Add"
+                width={15}
+                height={15}
+                priority
+              />
+              <p className="text-sm">Send message</p>
+            </Link>
+          </div>
           )
         }
         <div className="pt-16 flex flex-col md:flex-row justify-center gap-10 w-full max-w-full md:max-w-[80%] 3xl:max-w-[70%]">
