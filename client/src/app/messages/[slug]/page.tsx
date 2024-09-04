@@ -38,7 +38,7 @@ export default function Messages() {
             <div className="flex justify-start gap-10 px-4 sm:px-16 2xl:px-24 py-16 w-full">
                 <Menu />
                 <div className="relative w-full md:w-[50%] pt-16">
-                    <ChatBox name={userProfileData.name} image={profileImageUrl} />
+                    <ChatBox name={userProfileData.name} image={profileImageUrl} targetUserId={slug} />
                 </div>
             </div>
         </main>
