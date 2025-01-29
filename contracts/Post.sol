@@ -49,7 +49,7 @@ contract Post {
 
     function likePost(uint256 _postId) public {
         require(_postId < nextPostId, "Post doesn't exist!");
-        require(!postLikes[_postId][msg.sender], "You already like this post!");
+        require(!userLikes(_postId), "You already like this post!");
 
         postLikes[_postId][msg.sender] = true;
         posts[_postId].likes++;

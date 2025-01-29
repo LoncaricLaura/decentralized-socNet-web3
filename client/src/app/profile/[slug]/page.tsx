@@ -5,7 +5,7 @@ import { useContext, useEffect, useState } from "react";
 import Post from "../../components/Post";
 import EditProfile from "../../components/EditProfile";
 import AddPost from "../../components/AddPost";
-import { getIPFSUrl } from '../../ipfs';
+import { getFile, getIPFSUrl, getIPFSUrls } from '../../ipfs';
 import { useParams } from "next/navigation";
 import { PostType, AppContext } from "@/app/context/AppContext";
 import Link from "next/link";
@@ -36,12 +36,34 @@ export default function Profile() {
             setShowModalEdit(true);
           }
 
-          const posts = await getUserPosts(slug as '');
+          const gun = Gun();
+          const postNode = gun.get('posts')
+          const userPosts: any[] = [];
+          
+          await new Promise((resolve, reject) => {
+            postNode.map().once(async (postData, postId) => {
+              if (postData?.userId === slug) {
+                const postJson = await getFile(postData.cid);
+                const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
+                userPosts.push({ 
+                  postId,
+                  postCid: postData.cid,
+                  timestamp: new Date(Number(postData.timestamp)),
+                  content: parsedPost.content,
+                  mediaUrl: getIPFSUrls(parsedPost.media),
+                  likes: parsedPost.likes,
+                  hidden: postData.hidden
+                 });
+              }
+            });
+            setTimeout(resolve, 2000);
+          });
+
           if (accountData?.address === slug) {
-            posts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-            setUserPosts(posts);
+            userPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+            setUserPosts(userPosts);
           } else {
-            const filteredPosts = posts.filter((post: any) => !post.hidden);
+            const filteredPosts = userPosts.filter((post: any) => !post.hidden);
             filteredPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
             setUserPosts(filteredPosts);
           }
@@ -51,7 +73,7 @@ export default function Profile() {
       }
     };
     fetchProfileData();
-  }, [slug, fetchUserProfile, getUserPosts]); 
+  }, [slug, fetchUserProfile]); 
 
   const profileImageUrl = getIPFSUrl(userProfileData.profileImageCid);
 
@@ -74,7 +96,7 @@ export default function Profile() {
                       alt={`User's avatar`}
                       width={200}
                       height={200}
-                      className="rounded-full border-4 border-white shadow-lg"
+                      className="rounded-[50%] border-2 border-white shadow-lg"
                     />
                   ) : (
                   <div className="rounded-full border-4 border-white shadow-lg w-50 h-50 bg-gray-300 flex items-center justify-center">

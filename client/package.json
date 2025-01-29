@@ -14,7 +14,9 @@
     "@multiformats/multiaddr": "^12.3.0",
     "@next/font": "^14.2.4",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "express": "^4.21.2",
     "file-type": "^19.4.1",
+    "gun": "^0.2020.1240",
     "hardhat": "^2.22.5",
     "helia": "^4.2.5",
     "ipfs-http-client": "^60.0.1",
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.6",
+    "@types/express": "^5.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

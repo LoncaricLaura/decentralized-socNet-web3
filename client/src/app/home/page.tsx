@@ -3,14 +3,11 @@ import Menu from "../components/Menu";
 import Post from "../components/Post";
 import Image from "next/image";
 import { getFile, getIPFSUrl, getIPFSUrls } from '../ipfs';
-import { POST_ABI, POST_ADDRESS, PROFILE_ABI, PROFILE_ADDRESS } from '../../../../context/Constants';
 import { useEffect, useState, useContext } from "react";
 import AddPost from "../components/AddPost";
 import { useRouter } from "next/navigation";
 import { AppContext } from "../context/AppContext";
-import { ethers } from "ethers";
 
-declare var window: any
 
 export default function Home() {
     const router = useRouter();
@@ -25,52 +22,73 @@ export default function Home() {
     useEffect(() => {
         const fetchAllPosts = async () => {
             try {
-                const provider = new ethers.BrowserProvider(window.ethereum);
-                const signer = await provider.getSigner();
-                const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
-    
-                const [postIds, authors, postCids, timestamps, likes, hidden] = await postContract.getAllPosts();
-    
-                const allUsersProfiles = await Promise.all(authors.map(async (author: string) => {
-                    const userProfile = await fetchUserProfile(author);
-                    if (userProfile) {
-                        return {
-                            address: author.toLowerCase(),
-                            avatarUrl: getIPFSUrl(userProfile.profileImageCid),
-                            name: userProfile?.name,
-                        };
-                    }
-                }));
-    
-                const profileMap = new Map(allUsersProfiles.map((profile: any) => [profile.address, profile]));
+                const gun = Gun();
+                const postsNode = gun.get('posts');
+                const allPosts: any[] = [];
                 
-                const posts = await Promise.all(postIds.map(async (postId: any, index: number) => {
-                    const postJson = await getFile(postCids[index]);
-                    const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
-    
-                    const authorProfile = profileMap.get(authors[index].toLowerCase());
-    
-                    return {
-                        postId: postId.toString(),
-                        postCid: postCids[index],
-                        address: authors[index].toLowerCase(),
-                        username: authorProfile?.name || authors[index],
-                        handle: authorProfile?.name || authors[index],
-                        timestamp: new Date(Number(timestamps[index]) * 1000),
-                        content: parsedPost.content,
-                        mediaUrl: getIPFSUrls(parsedPost.media),
-                        likes: likes[index],
-                        avatarUrl: authorProfile?.avatarUrl || '',
-                        hidden: hidden[index]
-                    };
-                }));
+                await new Promise((resolve, reject) => {
+                    postsNode.map().once((postData, postId) => {
+                        if (postData) {
+                            allPosts.push({ ...postData, postId });
+                        }
+                    });
+                    setTimeout(resolve, 2000);
+                });
+                console.log(allPosts)
+
+                const allUsersProfiles = await Promise.all(
+                    allPosts.map(async (post) => {
+                        const userId = post.userId;
+                        console.log('userid', userId)
+                        const userProfile = await fetchUserProfile(userId as '');
+                        if (userProfile) {
+                            return {
+                                address: userId.toLowerCase(),
+                                avatarUrl: getIPFSUrl(userProfile.profileImageCid),
+                                name: userProfile.name,
+                            }
+                        }
+                    })
+                );
+        
+                const profileMap = new Map(
+                    allUsersProfiles.map((profile: any) => [profile.address, profile])
+                );
+        
+                const posts = await Promise.all(
+                    allPosts.map(async (post) => {
+                        const postJson = await getFile(post.cid);
+                        const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
+        
+                        const authorProfile = profileMap.get(post.userId.toLowerCase());
+        
+                        return {
+                            postId: post.postId,
+                            postCid: post.cid,
+                            address: post.userId.toLowerCase(),
+                            username: authorProfile.name,
+                            handle: authorProfile.name,
+                            timestamp: new Date(Number(post.timestamp)),
+                            content: parsedPost.content,
+                            mediaUrl: getIPFSUrls(parsedPost.media),
+                            likes: post.likes || 0,
+                            avatarUrl: authorProfile?.avatarUrl || '',
+                            hidden: post.hidden || false,
+                        };
+                    })
+                );
+        
                 const filteredPosts = posts.filter((post: any) => !post.hidden);
                 filteredPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        
                 setAllPosts(filteredPosts);
             } catch (error) {
-                console.error("Error fetching posts:", error);
+                console.error('Error fetching posts from Gun.js:', error);
             }
         };
+        
+        // const postId = 'm6b6lg9eWQhg36xPX4ZU'; // Replace with the specific post's ID
+        // gun.get('posts').get(postId).put(null); // Deletes the specific post
         
         fetchAllPosts();
     }, []);

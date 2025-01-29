@@ -12,12 +12,13 @@ import HidePostModal from "./HidePostModal";
 import { ethers } from "ethers";
 import { POST_ADDRESS, POST_ABI } from "../../../../context/Constants";
 import { removePinnedData } from "../ipfs";
+import Comments from "./Comments";
 
 TimeAgo.addDefaultLocale(en)
 declare var window: any
 
 interface PostProps {
-  postId: number;
+  postId: any;
   postCid?: string;
   avatarUrl: string;
   username: string;
@@ -44,11 +45,14 @@ export default function Post({
   hidden = false,
 }: PostProps) {
 
-  const { accountData } = useContext(AppContext);
+  const { accountData, profileData } = useContext(AppContext);
   const router = useRouter();
   const pathName = usePathname();
   const slug = address.toLowerCase();
   const [showModalHide, setShowModalHide] = useState(false);
+  const [showModalComments, setShowModalComments] = useState(false);
+
+  const [likers, setLikers] = useState<string[]>([]);
 
   const changeRoute = () => {
     router.push(`profile/${slug}`);
@@ -57,6 +61,10 @@ export default function Post({
   const toggleModalHide = () => {
     setShowModalHide(!showModalHide);
   };
+
+  const toggleModalComments = () => {
+    setShowModalComments(!showModalComments);
+  }
 
   const showPost = async () => {
     try {
@@ -108,7 +116,7 @@ export default function Post({
           <div className="flex justify-between text-[#e8f0fa]">
             <div className="flex flex-col items-start max-w-fit cursor-pointer truncate" onClick={changeRoute}>
               <p className="font-bold">{username}</p>
-              <p className="text-sm ml-1">@{handle.toLowerCase()}</p>
+              <p className="text-sm ml-1">@{handle?.toLowerCase()}</p>
             </div>
             <div className="flex flex-col items-end max-w-fit cursor-pointer gap-y-2">
               <ReactTimeAgo date={timestamp} locale="en-US" className="text-sm"/>
@@ -129,11 +137,26 @@ export default function Post({
                 <PostSwiper mediaUrls={mediaUrls} />
             </div>
           )}
-          <div className="flex space-x-4 mt-4 text-gray-500">
-            <LikeButton postId={postId} currentLikes={likes} />
+
+          <div className="relative flex items-start space-x-3 pt-4 text-gray-500">
+            <LikeButton postId={postId} currentLikes={likes} onLikersChange={(updatedLikers) => setLikers(updatedLikers)} />
+            <Image
+              src="/icons/icon-comment.svg"
+              alt="Icon Comment"
+              width={26}
+              height={26}
+              priority
+              className="cursor-pointer absolute left-8 -bottom-0.5"
+              onClick={toggleModalComments}
+            />
+          </div>
+
+          {showModalComments && <Comments setShowModal={setShowModalComments} postId={postId} currentUser={{
+            avatarUrl: profileData?.profileImageCid || "/images/icon-profile.png",
+            username: profileData?.name || "Anonymous",
+          }} />}
           </div>
         </div>
-      </div>
       
       {showModalHide && <HidePostModal setShowModal={setShowModalHide} postCid={postCid} postId={postId} />}
     </div>

@@ -41,8 +41,6 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
         try {
            const userData = await profileContract.getUser(userAddress);
 
-           console.log('User data:', userData);
-
            if (userData.name !== '') {
              await profileContract.updateUser(name, description, profileImageCid);
            } else {
