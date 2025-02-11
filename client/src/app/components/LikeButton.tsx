@@ -24,24 +24,23 @@ export default function LikeButton({ postId, currentLikes, onLikersChange }: Lik
       setShowModalLikers(!showModalLikers);
     };
 
+    const postLikes = gun.get(`post/${postId}/likes`);
+
     useEffect(() => {
-      const postLikes = gun.get(`post/${postId}/likes`);
-  
       postLikes.map().once((data, key) => {
         if (data) {
-          setLikers((prev) => [...prev.filter((u) => u !== key), key]);
+          setLikers((prev) => [...prev.filter((x) => x !== key), key]);
           if (key === username) setIsLiked(true);
         }
       });
     }, [postId, username, onLikersChange]);
 
     async function handleLike() {
-      const postLikes = gun.get(`post/${postId}/likes`);
       if (isLiked) {
         postLikes.get(username).put(null);
         setLikes(likes - 1);
         setIsLiked(false);
-        setLikers((prev) => prev.filter((u) => u !== username));
+        setLikers((prev) => prev.filter((x) => x !== username));
       } else {
         postLikes.get(username).put(true);
         setLikes(likes + 1);
@@ -54,7 +53,11 @@ export default function LikeButton({ postId, currentLikes, onLikersChange }: Lik
       <main className="">
         {likers.length > 0 && (
           <div className="mt-2 text-xs text-gray-500 cursor-pointer" onClick={toggleModalLikers}>
-            Liked by: {likers[0]} and others
+            {likers.length === 1 ? (
+              <p>Liked by: {likers[0]}</p>
+            ) : (
+              <p>Liked by: {likers[0]} and others</p>
+            )}
           </div>
         )}
         <button

@@ -1,6 +1,6 @@
 'use client'
 import Image from "next/image";
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import ReactTimeAgo from 'react-time-ago'
 import TimeAgo from 'javascript-time-ago'
 import PostSwiper from "./PostSwiper";
@@ -13,6 +13,7 @@ import { ethers } from "ethers";
 import { POST_ADDRESS, POST_ABI } from "../../../../context/Constants";
 import { removePinnedData } from "../ipfs";
 import Comments from "./Comments";
+import SavePostButton from "./SavePostButton";
 
 TimeAgo.addDefaultLocale(en)
 declare var window: any
@@ -29,6 +30,7 @@ interface PostProps {
   mediaUrls?: string[];
   likes: number;
   hidden: boolean;
+  onUnsave?: (postId: string) => void
 }
 
 export default function Post({
@@ -43,6 +45,7 @@ export default function Post({
   mediaUrls,
   likes,
   hidden = false,
+  onUnsave
 }: PostProps) {
 
   const { accountData, profileData } = useContext(AppContext);
@@ -51,7 +54,8 @@ export default function Post({
   const slug = address.toLowerCase();
   const [showModalHide, setShowModalHide] = useState(false);
   const [showModalComments, setShowModalComments] = useState(false);
-
+  const [imageSize, setImageSize] = useState(50);
+  const pathname = usePathname();
   const [likers, setLikers] = useState<string[]>([]);
 
   const changeRoute = () => {
@@ -65,6 +69,20 @@ export default function Post({
   const toggleModalComments = () => {
     setShowModalComments(!showModalComments);
   }
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (pathname === '/saved-posts') {
+        setImageSize(30);
+      } else {
+        setImageSize(window.innerWidth < 1024 ? 30 : 50);
+      }
+    }
+
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize)
+  }, [pathname]);
 
   const showPost = async () => {
     try {
@@ -87,7 +105,7 @@ export default function Post({
 
   return (
     <div className="relative bg-[#E8EAF7]/10 rounded-md shadow-md mb-4 hover:shadow-lg h-auto">
-          {
+      {
         hidden === true && (
           <div className="absolute flex items-center justify-center z-20 h-full w-full m-auto bg-[#121212]/85">
             <button onClick={showPost} className="flex gap-2 items-center bg-gradient-to-r from-[#7ca3f0] to-[#4a90e2] hover:from-[#5c8ded] hover:to-[#5c8ded] rounded-md min-w-20 w-fit text-white font-bold text-lg px-4 py-2.5">
@@ -107,8 +125,8 @@ export default function Post({
         <Image
           src={avatarUrl}
           alt={`${username}'s avatar`}
-          width={50}
-          height={50}
+          width={imageSize}
+          height={imageSize}
           className="rounded-full shadow-md shadow-gray-800 cursor-pointer"
           onClick={changeRoute}
         />
@@ -149,6 +167,7 @@ export default function Post({
               className="cursor-pointer absolute left-8 -bottom-0.5"
               onClick={toggleModalComments}
             />
+            <SavePostButton postId={postId} onUnsave={onUnsave} />
           </div>
 
           {showModalComments && <Comments setShowModal={setShowModalComments} postId={postId} currentUser={{

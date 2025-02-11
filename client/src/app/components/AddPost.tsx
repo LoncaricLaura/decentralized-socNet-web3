@@ -10,13 +10,6 @@ interface AddPostProps {
   profileData: { name: string, description: string; };
 }
 
-interface Comment {
-  avatarUrl: string,
-  username: string,
-  content: string,
-  timestamp: Date
-}
-
 export default function AddPost({ setShowModal, profileData }: AddPostProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [content, setContent] = useState<string>('');
@@ -44,8 +37,6 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
         content: content,
         location: location,
         timestamp: Date.now(),
-        comments: {} as Comment,
-        likes: {}
       };
 
       const postCid = await addJson(postJson);

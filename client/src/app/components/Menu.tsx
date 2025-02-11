@@ -1,9 +1,18 @@
 'use client'
 import Image from "next/image";
 import Link from 'next/link'
+import FriendsList from "./FriendsList";
+import { useState } from "react";
 
 export default function Menu() {
+    const [showModalFriendsList, setShowModalFriendsList] = useState(false);
+
+    const toggleModalFriendsList = () => {
+        setShowModalFriendsList(!showModalFriendsList);
+    };
+    
     return (
+        <>
       <main className="sticky top-32 w-1/4 lg:w-1/6 h-[250px] hidden md:flex flex-col items-start justify-start gap-y-5 my-16 border-r border-[#d1e3fa]">
         <div className="flex flex-row items-center gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
             <Image
@@ -13,7 +22,7 @@ export default function Menu() {
                 height={50}
                 priority
             />
-            <Link href={`/home`} className="mt-4">Friends</Link>
+            <div className="mt-4" onClick={toggleModalFriendsList}>Friends</div>
         </div>
         <div className="flex flex-row items-center gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
             <Image
@@ -23,7 +32,7 @@ export default function Menu() {
                 height={50}
                 priority
             />
-            <Link href={`/profile`}>Saved</Link>
+            <Link href={`/saved-posts`}>Saved</Link>
         </div>
         <div className="flex flex-row items-center gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
             <Image
@@ -35,6 +44,9 @@ export default function Menu() {
             />
             <Link href={`/profile`}>Rewards</Link>
         </div>
+
       </main>
+    {showModalFriendsList && <FriendsList setShowModal={setShowModalFriendsList} />}
+    </>
     );
   }
