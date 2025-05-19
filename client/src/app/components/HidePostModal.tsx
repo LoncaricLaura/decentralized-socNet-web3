@@ -1,38 +1,29 @@
 'use client'
 import Image from 'next/image';
-import { ethers } from "ethers";
-import { POST_ADDRESS, POST_ABI } from "../../../../context/Constants";
-import { removePinnedData } from "../ipfs";
+import gun from "../../../gun";
 
 declare var window: any
 
 interface HidePostModalProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
   postCid?: string,
-  postId: number
+  postId: number,
+  onHide?: () => void;
 }
 
-export default function HidePostModal({ setShowModal, postCid, postId }: HidePostModalProps) {
-
+export default function HidePostModal({ setShowModal, postCid, postId, onHide }: HidePostModalProps) {
   const hidePost = async () => {
     try {
-      await removePinnedData(postCid || '');
-
-      const ethereum = window.ethereum;
-      if (ethereum) {
-        const provider = new ethers.BrowserProvider(ethereum);
-        const signer = await provider.getSigner();
-        const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
-
-        const hidePost = await postContract.hidePost(postId);
-        await hidePost.wait();
+      if (postId) {
+        gun.get('posts').get(postId.toString()).put({ hidden: true });
+        console.log("🕶️ Post hidden via Gun");
+        if (onHide) onHide();
         setShowModal(false);
-        console.log("Post has been hidden from the profile");
       }
     } catch (error) {
-      console.error("Error hidding post: ", error);
+      console.error("❌ Error hiding post:", error);
     }
-  }
+  };
 
   const closeModal = () => {
     setShowModal(false);

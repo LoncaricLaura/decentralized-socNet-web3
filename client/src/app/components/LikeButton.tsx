@@ -1,69 +1,68 @@
-// TODO: Add new logic for saving likes
 import Image from 'next/image';
-import { useEffect, useState } from "react";
-import { ethers } from 'ethers';
-import { POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
+import { useContext, useEffect, useState } from "react";
+import { AppContext } from '../context/AppContext';
+import gun from '../../../gun';
+import LikesModal from './LikesModal';
 
 interface LikePostProps {
   postId: number,
-  currentLikes: number;
+  currentLikes: number,
+  onLikersChange?: (likers: string[]) => void;
 }
 
-declare var window: any
 
-export default function LikeButton({ postId, currentLikes }: LikePostProps) {
+export default function LikeButton({ postId, currentLikes, onLikersChange }: LikePostProps) {
+    const { profileData } = useContext(AppContext);
     const [likes, setLikes] = useState(currentLikes);
     const [isLiked, setIsLiked] = useState(false);
+    const [likers, setLikers] = useState<string[]>([]); 
+    const [showModalLikers, setShowModalLikers] = useState(false);
 
-    const numOfLikes = Number(likes);
+    const username = profileData?.name || "Anonymous";
 
-    async function handleLike() {
-        try {
-            const ethereum = window.ethereum;
-            if (ethereum) {
-                const provider = new ethers.BrowserProvider(ethereum);
-                const signer = await provider.getSigner();
-                const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
+    const toggleModalLikers = () => {
+      setShowModalLikers(!showModalLikers);
+    };
 
-                const like = await postContract.likePost(postId);
-                await like.wait();
-
-                setLikes(isLiked ? likes - 1 : likes + 1);
-                setIsLiked(true);
-                console.log("Post liked successfully!");
-            } else {
-                console.error("Ethereum object not found, install Metamask!");
-            }
-        } catch (error) {
-            console.error("Error liking post:", error);
-        }
-    }
-
-    async function checkIfLiked() {
-        const ethereum = window.ethereum;
-        try {
-          if (ethereum) {   
-            const provider = new ethers.BrowserProvider(ethereum);
-            const signer = await provider.getSigner();
-            const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
-                 
-            const userHasLiked = await postContract.userLikes(postId);
-            setIsLiked(userHasLiked);
-          }
-        } catch (error) {
-          console.error("Error checking if post is liked:", error);
-        }
-    }
+    const postLikes = gun.get(`post/${postId}/likes`);
 
     useEffect(() => {
-        checkIfLiked();
-      }, []);
+      postLikes.map().once((data, key) => {
+        if (data) {
+          setLikers((prev) => [...prev.filter((x) => x !== key), key]);
+          if (key === username) setIsLiked(true);
+        }
+      });
+    }, [postId, username, onLikersChange]);
+
+    async function handleLike() {
+      if (isLiked) {
+        postLikes.get(username).put(null);
+        setLikes(likes - 1);
+        setIsLiked(false);
+        setLikers((prev) => prev.filter((x) => x !== username));
+      } else {
+        postLikes.get(username).put(true);
+        setLikes(likes + 1);
+        setIsLiked(true);
+        setLikers((prev) => [...prev, username]);
+      }
+    }
 
     return (
       <main className="">
+        {likers.length > 0 && (
+          <div className="mt-2 text-xs text-gray-500 cursor-pointer" onClick={toggleModalLikers}>
+            {likers.length === 1 ? (
+              <p>Liked by: {likers[0]}</p>
+            ) : (
+              <p>Liked by: {likers[0]} and others</p>
+            )}
+          </div>
+        )}
         <button
             onClick={handleLike}
-            className="flex items-center space-x-1"
+            className="flex items-center justify-center space-x-1 pt-2"
         >
             <Image
                 src={isLiked ? "/icons/icon-heart-full.svg" : "/icons/icon-heart.svg"}
@@ -72,13 +71,16 @@ export default function LikeButton({ postId, currentLikes }: LikePostProps) {
                 height={20}
                 priority
             />
-            <span>{likes}</span>
             {
-                numOfLikes > 0 && (
-                    <p className='text-[#7ca3f0] text-sm'>{numOfLikes}</p>
+                likers.length > 0 && (
+                    <p className='text-[#7ca3f0] text-sm'>{likers.length}</p>
                 )
             }
         </button>
+
+        {showModalLikers && (
+          <LikesModal likers={likers} onClose={toggleModalLikers} />
+        )}
       </main>
     );
   }

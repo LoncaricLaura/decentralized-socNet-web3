@@ -1,22 +1,19 @@
-// 'use client'
-import Image from 'next/image';
-import { useState } from "react";
+import { useContext, useState } from "react";
 import UploadFile from '../components/UploadFile'
 import { addFile, addJson } from '../ipfs'
-import { ethers } from 'ethers';
-import { POST_ABI, POST_ADDRESS } from '../../../../context/Constants';
+import gun from "../../../gun";
+import { AppContext } from "../context/AppContext";
 
 interface AddPostProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
   profileData: { name: string, description: string; };
 }
 
-declare var window: any
-
 export default function AddPost({ setShowModal, profileData }: AddPostProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [content, setContent] = useState<string>('');
   const [location, setLocation] = useState<string>('');
+  const { accountData } = useContext(AppContext);
 
   const closeModal = () => {
     setShowModal(false);
@@ -25,39 +22,42 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
   const uploadPost = async () => {
     try {
       const mediaCids: string[] = [];
-    
+
       for (const file of selectedFiles) {
         const mediaCid = await addFile(file);
         console.log(`Uploaded media CID: ${mediaCid}`);
         mediaCids.push(mediaCid);
       }
 
-        const postJson = {
-            media: mediaCids,
-            content: content,
-            location: location,
-            timestamp: Date.now()
-        };
+      const postJson = {
+        username: profileData.name,
+        userId: accountData?.address,
+        media: mediaCids,
+        content: content,
+        location: location,
+        timestamp: Date.now(),
+        hidden: false
+      };
 
-        const postCid = await addJson(postJson);
-        console.log(`Uploaded post JSON CID: ${postCid}`);
+      const postCid = await addJson(postJson);
 
-        const ethereum = window.ethereum;
-        if (ethereum) {
-            const provider = new ethers.BrowserProvider(ethereum);
-            const signer = await provider.getSigner();
-            const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
+      const posts = gun.get("posts");
+      posts.set({
+        cid: postCid,
+        userId: accountData?.address,
+        timestamp: postJson.timestamp,
+        comments: {},
+        likes: {},
+        hidden: false
+      });
 
-            await postContract.createPost(postCid);
-            console.log("Post stored on-chain successfully!");
-            closeModal();
-        } else {
-            console.error("Ethereum object not found, install Metamask!");
-        }
+      console.log("Post added to Gun.js!");
+      console.log("post", posts)
+      closeModal();
     } catch (error) {
       console.error("Error uploading post:", error);
     }
-  };
+  }
   
   const handleSaveClick = () => {
     uploadPost();
@@ -71,12 +71,12 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
               className="absolute top-8 right-4"
               onClick={closeModal}
             >
-              <Image
+              <img
                 src="/icons/icon-close.png"
                 alt="Icon Close"
                 width={25}
                 height={25}
-                priority
+                // priority
               />
             </button>
             <form className="w-[100%] flex flex-col gap-4" method="POST">

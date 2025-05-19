@@ -159,7 +159,7 @@ export default function ChatBox({name, image, targetUserId}: ChatBoxProps) {
     return (
         <main className="relative flex flex-col justify-between bg-[#E8EAF7]/10 rounded-md shadow-md mb-4 hover:shadow-lg max-h-full h-full">
             <div className="flex items-center space-x-4 p-4 bg-[#E8EAF7]/10 ">
-                <Image
+                <img
                     src={image}
                     alt={`${name}s avatar`}
                     width={50}

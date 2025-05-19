@@ -3,7 +3,8 @@ import { ethers } from "ethers";
 import { usePathname, useRouter } from "next/navigation";
 import React, { createContext, useCallback, useEffect, useState } from "react";
 import { PROFILE_ADDRESS, PROFILE_ABI, POST_ABI, POST_ADDRESS } from "../../../../context/Constants";
-import { getFile, getIPFSUrls } from "../ipfs";
+import { getFile, getIPFSUrls, removePinnedData } from "../ipfs";
+import gun from "../../../gun";
 
 declare var window: any
 
@@ -13,7 +14,7 @@ interface AppContextType {
     isAuthenticated: boolean;
     profileData: ProfileType | undefined;
     fetchUserProfile: (address: string) => Promise<ProfileType | undefined>;
-    getUserPosts: (address: string) => Promise<PostType[]>;
+    deletePost: (postId: string, postCid?: string) => Promise<void>; 
   }
   
 export const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -41,101 +42,83 @@ export interface PostType {
   hidden: boolean;
 }
 
-const AppProvider = ({ children}: { children: React.ReactNode}) => {
-    const [accountData, setAccountData] = useState<AccountType>();
-    const [profileData, setProfileData] = useState<ProfileType | undefined>();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const router = useRouter();
-    const pathname = usePathname();
-    const ethereum = window.ethereum;
+const AppProvider = ({ children }: { children: React.ReactNode }) => {
+  const [accountData, setAccountData] = useState<AccountType>();
+  const [profileData, setProfileData] = useState<ProfileType>();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
-    const updateAccountData = async (address: string) => {
-      const provider = new ethers.BrowserProvider(ethereum);
-      const balance = await provider.getBalance(address);
-      const network = await provider.getNetwork();
-  
-      const accountData = {
-        address,
-        balance: ethers.formatEther(balance),
-        chainId: network.chainId.toString(),
-        network: network.name,
-      };
-  
-      setAccountData(accountData);
-      setIsAuthenticated(true);
+  const updateAccountData = async (address: string) => {
+    if (!window.ethereum) return;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const balance = await provider.getBalance(address);
+    const network = await provider.getNetwork();
 
-      const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
-      const userProfile = await profileContract.getUser(address);
-      setProfileData({
-        name: userProfile.name,
-        description: userProfile.description,
-        profileImageCid: userProfile.profileImageCid,
-      });
+    setAccountData({
+      address,
+      balance: ethers.formatEther(balance),
+      chainId: network.chainId.toString(),
+      network: network.name,
+    });
+    setIsAuthenticated(true);
 
-    };
-    
-    const connectToMetaMask = useCallback(async () => {
-      if (ethereum) {
-        try {
-          const accounts = await ethereum.request({
-            method: "eth_requestAccounts",
-          });
-          const address = accounts[0];
-          await updateAccountData(address);
-  
-          const provider = new ethers.BrowserProvider(ethereum);
-          const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
-          const isRegistered = await profileContract.isUserRegistered(address);
-  
-          if (isRegistered) {
-            router.push("/home");
-          } else {
-            router.push(`/profile/${address}`);
-          }
-        } catch (error: Error | any) {
-          alert(`Error connecting to MetaMask: ${error?.message ?? error}`);
-        }
-      } else {
-        alert("MetaMask not installed");
-      }
-    }, [router]);
+    const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
+    const userProfile = await profileContract.getUser(address);
 
-    // fetch profile data for specific user
-    const fetchUserProfile = async (address: string) => {
-      const provider = new ethers.BrowserProvider(ethereum);
-      const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
-      const userProfile = await profileContract.getUser(address);
-      return {
-          name: userProfile.name,
-          description: userProfile.description,
-          profileImageCid: userProfile.profileImageCid,
-      };
-    }
-
-    // get current user posts
-    const getUserPosts = async (address: string) => {
-      const provider = new ethers.BrowserProvider(ethereum);
-      const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, provider);
-      const postIds = await postContract.getUserPosts(address);
-      
-      return await Promise.all(
-        postIds.map(async (postId: any) => {
-          const postData = await postContract.getPost(postId);
-          const postJson = await getFile(postData.postCid);
-          const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
-              return {
-                  postId,
-                  postCid: postData.postCid,
-                  timestamp: new Date(Number(postData.timestamp) * 1000),
-                  content: parsedPost.content,
-                  mediaUrl: getIPFSUrls(parsedPost.media),
-                  likes: parsedPost.likes,
-                  hidden: postData.hidden
-              };
-          }));
+    setProfileData({
+      name: userProfile.name,
+      description: userProfile.description,
+      profileImageCid: userProfile.profileImageCid,
+    });
   };
 
-// update or clear data if account is changed or disconnected
+  const connectToMetaMask = useCallback(async () => {
+    if (!window.ethereum) return alert("MetaMask not installed");
+
+    try {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const address = accounts[0];
+      await updateAccountData(address);
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
+      const isRegistered = await profileContract.isUserRegistered(address);
+
+      router.push(isRegistered ? "/home" : `/profile/${address}`);
+    } catch (error: any) {
+      alert(`Error connecting to MetaMask: ${error.message ?? error}`);
+    }
+  }, [router]);
+
+  const fetchUserProfile = async (address: string) => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
+    const userProfile = await profileContract.getUser(address);
+    return {
+      name: userProfile.name,
+      description: userProfile.description,
+      profileImageCid: userProfile.profileImageCid,
+    };
+  };
+
+  const deletePost = async (postId: string, postCid?: string) => {
+    try {
+      if (!postId) return;
+      // const gun = require("gun"); 
+      if (postCid) {
+        await removePinnedData(postCid);
+      }
+      gun.get("posts").get(postId).put(null);
+      console.log(`🗑️ Post ${postId} deleted`);
+    } catch (error) {
+      console.error("❌ Failed to delete post:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.ethereum) return;
+
     const handleAccountChange = async (accounts: string[]) => {
       if (accounts.length > 0) {
         await updateAccountData(accounts[0]);
@@ -143,54 +126,42 @@ const AppProvider = ({ children}: { children: React.ReactNode}) => {
         setAccountData(undefined);
         setProfileData(undefined);
         setIsAuthenticated(false);
+        router.push("/");
       }
     };
 
-      useEffect(() => {
-        if (ethereum) {
-          ethereum.on("accountsChanged", handleAccountChange);
-    
-          const getConnectedAccount = async () => {
-            const accounts = await ethereum.request({ method: "eth_accounts" });
-            if (accounts.length > 0) {
-              await updateAccountData(accounts[0]);
-            } else {
-              router.push('/');
-            }
-          };
-          getConnectedAccount();
-    
-          return () => {
-            ethereum.removeListener("accountsChanged", handleAccountChange);
-          };
-        }
-      }, []);
+    window.ethereum.on("accountsChanged", handleAccountChange);
 
-      useEffect(() => {
-        const checkMetaMaskConnection = async () => {
-          if (ethereum) {
-            const accounts = await ethereum.request({ method: 'eth_accounts' });
-    
-            if (accounts.length === 0 && pathname !== '/') {
-              router.push('/');
-            }
-          } else {
-            if (pathname !== '/') {
-              router.push('/');
-            }
-          }
-        };
-    
-        checkMetaMaskConnection();
-      }, [router]);
+    const getConnectedAccount = async () => {
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      if (accounts.length > 0) {
+        await updateAccountData(accounts[0]);
+      } else if (pathname !== "/") {
+        router.push("/");
+      }
+    };
 
-      return (
-        <AppContext.Provider
-          value={{ accountData, connectToMetaMask, isAuthenticated, profileData, fetchUserProfile, getUserPosts }}
-        >
-          {children}
-        </AppContext.Provider>
-      );
-}
+    getConnectedAccount();
+
+    return () => {
+      window.ethereum.removeListener("accountsChanged", handleAccountChange);
+    };
+  }, [router, pathname]);
+
+  return (
+    <AppContext.Provider
+      value={{
+        accountData,
+        connectToMetaMask,
+        isAuthenticated,
+        profileData,
+        fetchUserProfile,
+        deletePost
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};
 
 export default AppProvider;

@@ -14,7 +14,6 @@ contract Profile {
 
     event UserRegistered(address userAddress, string name, string description, string profileImageCid);
     event UserUpdated(address userAddress, string name, string description, string profileImageCid);
-    event UserDeleted(address userAddress);
     
     constructor() {
         owners[msg.sender] = true;
@@ -58,10 +57,5 @@ contract Profile {
     function demoteOwner(address ownerAddress) public onlyOwner {
         require(msg.sender != ownerAddress, "Cannot demote self");
         owners[ownerAddress] = false;
-    }
-
-    function deleteUser() public {
-        delete users[msg.sender];
-        emit UserDeleted(msg.sender);
     }
 }
