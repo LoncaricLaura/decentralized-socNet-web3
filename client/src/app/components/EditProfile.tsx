@@ -64,8 +64,6 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
     uploadFiles();
   };
 
-  const profileImageUrl = getIPFSUrl(profileImage);
-
     return (
       <main className="fixed flex items-center justify-center top-0 left-0 z-40 m-auto w-full h-full bg-[#121212]/85">
         <div className="relative w-[85%] sm:w-1/2 lg:w-1/2 2xl:w-1/3 h-3/4 overflow-auto bg-[#cfcccc] rounded-md px-4 py-8 flex flex-col gap-6">
@@ -74,12 +72,12 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
               className="absolute top-8 right-4"
               onClick={closeModal}
             >
-              <Image
+              <img
                 src="/icons/icon-close.png"
                 alt="Icon Close"
                 width={25}
                 height={25}
-                priority
+                // priority
               />
             </button>
             <form className="w-[100%] flex flex-col gap-4" method="POST">

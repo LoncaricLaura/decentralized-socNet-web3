@@ -1,7 +1,7 @@
 'use client'
 
 import Image from "next/image";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import Post from "../../components/Post";
 import EditProfile from "../../components/EditProfile";
 import AddPost from "../../components/AddPost";
@@ -14,7 +14,7 @@ import FriendsList from "@/app/components/FriendsList";
 
 export default function Profile() {
   const { slug } = useParams();
-  const { accountData, profileData, fetchUserProfile } = useContext(AppContext);
+  const { accountData, profileData, fetchUserProfile, deletePost } = useContext(AppContext);
   const [showModalEdit, setShowModalEdit] = useState(false);
   const [showModalPost, setShowModalPost] = useState(false);
   const [userProfileData, setUserProfileData] = useState({
@@ -30,9 +30,22 @@ export default function Profile() {
   const toggleModalFriendsList = () => {
     setShowModalFriendsList(!showModalFriendsList);
   };
+  const fetchProfileData = useCallback(() => {
+    if (!slug) return;
 
-  useEffect(() => {
-    const fetchProfileData = async () => {
+    const gun = Gun();
+    const postNode = gun.get('posts');
+
+    const postsMap = new Map<string, any>();
+
+    postNode.map().on(async (postData, postId) => {
+      if (!postData || postData.userId !== slug) return;
+
+      const existing = postsMap.get(postId);
+      const updatedHidden = postData.hidden ?? false;
+
+      if (existing && existing.hidden === updatedHidden) return; // prevent unnecessary updates
+
       try {
         if (slug) {
           const profile = await fetchUserProfile(slug as '');
@@ -43,44 +56,43 @@ export default function Profile() {
           if (profile?.name === '') {
             setShowModalEdit(true);
           }
+        const postJson = await getFile(postData.cid);
+        const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
+        const updatedPost = {
+          postId,
+          postCid: postData.cid,
+          timestamp: new Date(Number(postData.timestamp)),
+          content: parsedPost.content,
+          mediaUrl: getIPFSUrls(parsedPost.media),
+          likes: postData.likes,
+          hidden: updatedHidden,
+        };
 
-          const gun = Gun();
-          const postNode = gun.get('posts')
-          const userPosts: any[] = [];
-          
-          await new Promise((resolve) => {
-            postNode.map().once(async (postData, postId) => {
-              if (postData?.userId === slug) {
-                const postJson = await getFile(postData.cid);
-                const parsedPost = JSON.parse(new TextDecoder().decode(postJson));
-                userPosts.push({ 
-                  postId,
-                  postCid: postData.cid,
-                  timestamp: new Date(Number(postData.timestamp)),
-                  content: parsedPost.content,
-                  mediaUrl: getIPFSUrls(parsedPost.media),
-                  likes: parsedPost.likes,
-                  hidden: postData.hidden
-                 });
-              }
-            });
-            setTimeout(resolve, 2000);
-          });
+        postsMap.set(postId, updatedPost);
 
-          if (accountData?.address === slug) {
-            userPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-            setUserPosts(userPosts);
-          } else {
-            const filteredPosts = userPosts.filter((post: any) => !post.hidden);
-            filteredPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-            setUserPosts(filteredPosts);
-          }
+        const allPosts = Array.from(postsMap.values());
+
+        const sorted = allPosts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+        if (accountData?.address === slug) {
+          setUserPosts(sorted);
+        } else {
+          setUserPosts(sorted.filter(p => !p.hidden));
         }
-      } catch (error) {
-        console.error("Error fetching profile data: ", error);
+        }
+      } catch (err) {
+        console.error("Error processing post update:", err);
       }
-    };
+    });
+
+  }, [slug, accountData?.address]);
+
+  useEffect(() => {
     fetchProfileData();
+    return () => {
+      const gun = Gun();
+      gun.get('posts').off(); // stops all map listeners
+    };
   }, [slug, fetchUserProfile]); 
 
   const profileImageUrl = getIPFSUrl(userProfileData.profileImageCid);
@@ -164,18 +176,21 @@ export default function Profile() {
     }
   };
 
+  // deletePost("mass79qpjHN5d9VVd7KD");
+
   return (
     <main className="min-h-screen w-full">
       <div className="relative px-4 sm:px-16 2xl:px-24 py-16 w-full">
         <div className="relative bg-none md:bg-black/60 h-[250px] w-full rounded-lg shadow-md">
             <div className="absolute bottom-0 md:bottom-[-50px] left-0 md:left-16 flex flex-row items-center gap-8">
                 {profileImageUrl ? (
-                    <Image
+                    <img
                       src={profileImageUrl}
                       alt={`User's avatar`}
                       width={200}
                       height={200}
                       className="rounded-[50%] border-2 border-white shadow-lg"
+                      // priority
                     />
                   ) : (
                   <div className="rounded-full border-4 border-white shadow-lg w-50 h-50 bg-gray-300 flex items-center justify-center">
@@ -201,6 +216,7 @@ export default function Profile() {
                     width={15}
                     height={15}
                     priority
+                    style={{ width: "auto", height: "auto" }}
                   />
                   <p className="text-sm">Edit profile</p>
                 </button>
@@ -276,6 +292,7 @@ export default function Profile() {
                         mediaUrls={post.mediaUrl}
                         likes={post.likes}
                         hidden={post.hidden}
+                        fetchData={fetchProfileData}
                     />
                 ))
               ) : (

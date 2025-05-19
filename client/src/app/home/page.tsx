@@ -222,13 +222,15 @@ export default function Home() {
                 <Menu />
                 <div className="w-full md:w-[50%] pt-16">
                     <div className="flex items-start gap-3 w-full h-fit px-0 md:px-4 rounded-md mb-10">
-                        <Image
+                        <img
                             src={profileImageUrl}
                             alt={`${profileData.name}'s avatar`}
                             width={50}
                             height={50}
                             className="rounded-full shadow-md shadow-gray-800 cursor-pointer"
                             onClick={() => router.push(`/profile/${accountData?.address}`)}
+                            style={{ width: '80px', height: '80px' }}
+                            // priority
                         />
                         <textarea
                             name="content"

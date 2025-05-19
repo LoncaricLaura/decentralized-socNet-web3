@@ -32,7 +32,7 @@ export default function Comments({ postId, currentUser }: CommentsProps) {
         const commentsRef = posts.get(postId).get("comments");
 
         setComments([]); 
-        commentsRef.map().on((comment, key) => {
+        commentsRef.map().on((comment: any, key: any) => {
             if (!comment || !key) return;
 
             setComments((prev) => {
@@ -86,7 +86,7 @@ export default function Comments({ postId, currentUser }: CommentsProps) {
             <div className="flex flex-col gap-4 overflow-auto h-auto max-h-52">
                 {comments.map((comment) => (
                     <div key={comment.timestamp} className="flex gap-2 items-start">
-                        <Image
+                        <img
                             src={comment.avatarUrl || "/images/icon-profile.png"}
                             alt={`${comment.username}'s avatar`}
                             width={25}

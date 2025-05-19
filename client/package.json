@@ -12,8 +12,9 @@
     "@helia/json": "^3.0.5",
     "@helia/unixfs": "^3.0.7",
     "@multiformats/multiaddr": "^12.3.0",
-    "@next/font": "^14.2.4",
+    "@next/codemod": "^15.2.4",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "buffer": "^6.0.3",
     "express": "^4.21.2",
     "file-type": "^19.4.1",
     "gun": "^0.2020.1240",
@@ -25,6 +26,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-time-ago": "^7.3.3",
+    "stream-browserify": "^3.0.0",
     "swiper": "^11.1.9"
   },
   "devDependencies": {

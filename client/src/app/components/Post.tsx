@@ -9,11 +9,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { AppContext } from "../context/AppContext";
 import en from 'javascript-time-ago/locale/en'
 import HidePostModal from "./HidePostModal";
-import { ethers } from "ethers";
-import { POST_ADDRESS, POST_ABI } from "../../../../context/Constants";
-import { removePinnedData } from "../ipfs";
 import Comments from "./Comments";
 import SavePostButton from "./SavePostButton";
+import gun from "../../../gun";
 
 TimeAgo.addDefaultLocale(en)
 declare var window: any
@@ -30,6 +28,7 @@ interface PostProps {
   mediaUrls?: string[];
   likes: number;
   hidden: boolean;
+  fetchData?: () => void;
   onUnsave?: (postId: string) => void
 }
 
@@ -45,10 +44,11 @@ export default function Post({
   mediaUrls,
   likes,
   hidden = false,
+  fetchData,
   onUnsave
 }: PostProps) {
 
-  const { accountData, profileData } = useContext(AppContext);
+  const { accountData, profileData, fetchUserProfile } = useContext(AppContext);
   const router = useRouter();
   const pathName = usePathname();
   const slug = address.toLowerCase();
@@ -57,6 +57,7 @@ export default function Post({
   const [imageSize, setImageSize] = useState(50);
   const pathname = usePathname();
   const [likers, setLikers] = useState<string[]>([]);
+  const [localHidden, setLocalHidden] = useState(hidden);
 
   const changeRoute = () => {
     router.push(`profile/${slug}`);
@@ -86,30 +87,27 @@ export default function Post({
 
   const showPost = async () => {
     try {
-      await removePinnedData(postCid || '');
-
-      const ethereum = window.ethereum;
-      if (ethereum) {
-        const provider = new ethers.BrowserProvider(ethereum);
-        const signer = await provider.getSigner();
-        const postContract = new ethers.Contract(POST_ADDRESS, POST_ABI, signer);
-
-        const hidePost = await postContract.showPost(postId);
-        await hidePost.wait();
-        console.log("Post has been shown on the profile");
+      if (postId) {
+        gun.get('posts').get(postId.toString()).put({ hidden: false });
+        console.log("🕶️ Post hidden via Gun");
+        setLocalHidden(false);
       }
     } catch (error) {
-      console.error("Error showing post: ", error);
+      console.error("❌ Error showing post:", error);
     }
-  }
+  };
+
+  useEffect(() => {
+    setLocalHidden(hidden);
+  }, [hidden]);
 
   return (
     <div className="relative bg-[#E8EAF7]/10 rounded-md shadow-md mb-4 hover:shadow-lg h-auto">
       {
-        hidden === true && (
+        localHidden === true && (
           <div className="absolute flex items-center justify-center z-20 h-full w-full m-auto bg-[#121212]/85">
             <button onClick={showPost} className="flex gap-2 items-center bg-gradient-to-r from-[#7ca3f0] to-[#4a90e2] hover:from-[#5c8ded] hover:to-[#5c8ded] rounded-md min-w-20 w-fit text-white font-bold text-lg px-4 py-2.5">
-                <Image
+                <img
                     src='/icons/icon-show.png'
                     alt="Icon show"
                     width={20}
@@ -122,13 +120,15 @@ export default function Post({
         )
       }
       <div className="flex items-start space-x-4 p-4">
-        <Image
+        <img
           src={avatarUrl}
           alt={`${username}'s avatar`}
           width={imageSize}
           height={imageSize}
           className="rounded-full shadow-md shadow-gray-800 cursor-pointer"
           onClick={changeRoute}
+          style={{ width: "80px", height: "80px" }}
+          // priority
         />
         <div className="relative w-full max-w-[80%]">
           <div className="flex justify-between text-[#e8f0fa]">
@@ -139,7 +139,7 @@ export default function Post({
             <div className="flex flex-col items-end max-w-fit cursor-pointer gap-y-2">
               <ReactTimeAgo date={timestamp} locale="en-US" className="text-sm"/>
               {pathName === `/profile/${accountData?.address}` && (
-                <Image
+                <img
                     src='/icons/icon-hide.png'
                     alt="Icon hide"
                     width={20}
@@ -158,12 +158,12 @@ export default function Post({
 
           <div className="relative flex items-start space-x-3 pt-4 text-gray-500">
             <LikeButton postId={postId} currentLikes={likes} onLikersChange={(updatedLikers) => setLikers(updatedLikers)} />
-            <Image
+            <img
               src="/icons/icon-comment.svg"
               alt="Icon Comment"
               width={26}
               height={26}
-              priority
+              // priority
               className="cursor-pointer absolute left-8 -bottom-0.5"
               onClick={toggleModalComments}
             />
@@ -177,7 +177,7 @@ export default function Post({
           </div>
         </div>
       
-      {showModalHide && <HidePostModal setShowModal={setShowModalHide} postCid={postCid} postId={postId} />}
+      {showModalHide && <HidePostModal setShowModal={setShowModalHide} postCid={postCid} postId={postId} onHide={() => setLocalHidden(true)}  />}
     </div>
   );
 }

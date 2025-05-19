@@ -87,7 +87,7 @@ export default function FriendsList({ setShowModal }: FriendsListProps, { addres
                 <ul>
                     {friends.map((friend, index) => (
                         <li key={index} className='flex items-center gap-4 text-black py-2 cursor-pointer' onClick={() => changeRoute(friend.address)}>
-                            <Image 
+                            <img 
                                 src={friend.profileImage} 
                                 alt="Profile Image" 
                                 width={40} 

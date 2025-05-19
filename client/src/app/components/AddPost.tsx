@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { useContext, useState } from "react";
 import UploadFile from '../components/UploadFile'
 import { addFile, addJson } from '../ipfs'
@@ -37,6 +36,7 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
         content: content,
         location: location,
         timestamp: Date.now(),
+        hidden: false
       };
 
       const postCid = await addJson(postJson);
@@ -47,7 +47,8 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
         userId: accountData?.address,
         timestamp: postJson.timestamp,
         comments: {},
-        likes: {}
+        likes: {},
+        hidden: false
       });
 
       console.log("Post added to Gun.js!");
@@ -70,12 +71,12 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
               className="absolute top-8 right-4"
               onClick={closeModal}
             >
-              <Image
+              <img
                 src="/icons/icon-close.png"
                 alt="Icon Close"
                 width={25}
                 height={25}
-                priority
+                // priority
               />
             </button>
             <form className="w-[100%] flex flex-col gap-4" method="POST">

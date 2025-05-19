@@ -6,7 +6,7 @@ const FriendRequestNotification: FC<{ requestId: string, from: string, from_name
     <div className="p-4 shadow-lg rounded-md">
         <p className="font-bold text-sm">New Friend Request</p>
         <div className="flex gap-1.5 justify-start items-center">
-        <Image 
+        <img
             src={from_img || "/default-avatar.png"} 
             alt={`${from_name}'s profile picture`} 
             width={40} 

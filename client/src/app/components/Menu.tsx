@@ -15,32 +15,32 @@ export default function Menu() {
         <>
       <main className="sticky top-32 w-1/4 lg:w-1/6 h-[250px] hidden md:flex flex-col items-start justify-start gap-y-5 my-16 border-r border-[#d1e3fa]">
         <div className="flex flex-row items-center gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
-            <Image
+            <img
                 src="/images/icon-friends.png"
                 alt="Icon Home"
                 width={50}
                 height={50}
-                priority
+                // priority
             />
             <div className="mt-4" onClick={toggleModalFriendsList}>Friends</div>
         </div>
         <div className="flex flex-row items-center gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
-            <Image
+            <img
                 src="/images/icon-saved.png"
                 alt="Icon Profile"
                 width={50}
                 height={50}
-                priority
+                // priority
             />
             <Link href={`/saved-posts`}>Saved</Link>
         </div>
         <div className="flex flex-row items-center gap-x-2 cursor-pointer text-[#d1e3fa] hover:text-white">
-            <Image
+            <img
                 src="/images/icon-rewards.png"
                 alt="Icon Profile"
                 width={50}
                 height={50}
-                priority
+                // priority
             />
             <Link href={`/profile`}>Rewards</Link>
         </div>
