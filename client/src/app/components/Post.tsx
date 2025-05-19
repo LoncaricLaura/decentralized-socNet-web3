@@ -2,7 +2,7 @@
 import Image from "next/image";
 import React, { useContext, useEffect, useState } from 'react'
 import ReactTimeAgo from 'react-time-ago'
-import TimeAgo from 'javascript-time-ago'
+import '../utils/timeAgoInit';
 import PostSwiper from "./PostSwiper";
 import LikeButton from "./LikeButton";
 import { usePathname, useRouter } from "next/navigation";
@@ -13,7 +13,6 @@ import Comments from "./Comments";
 import SavePostButton from "./SavePostButton";
 import gun from "../../../gun";
 
-TimeAgo.addDefaultLocale(en)
 declare var window: any
 
 interface PostProps {
