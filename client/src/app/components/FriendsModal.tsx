@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import { useContext } from 'react';
 import { AppContext } from "@/app/context/AppContext";
+import gun from "../../../gun";
 
 interface FriendsModalProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -17,8 +18,6 @@ export default function FriendsModal({ setShowModal, slug, setFriendRequestStatu
           console.error("Invalid data: missing addresses.");
           return;
         }
-      
-        const gun = Gun();
       
         const senderNode = gun.get('users').get(accountData.address).get('friends');
         senderNode.map().once((friendAddress, friendKey) => {

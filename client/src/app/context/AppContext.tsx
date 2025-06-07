@@ -3,18 +3,18 @@ import { ethers } from "ethers";
 import { usePathname, useRouter } from "next/navigation";
 import React, { createContext, useCallback, useEffect, useState } from "react";
 import { PROFILE_ADDRESS, PROFILE_ABI, POST_ABI, POST_ADDRESS } from "../../../../context/Constants";
-import { getFile, getIPFSUrls, removePinnedData } from "../ipfs";
 import gun from "../../../gun";
 
 declare var window: any
 
 interface AppContextType {
+    SEA: any;
     connectToMetaMask: () => Promise<void>;
     accountData: AccountType | undefined;
     isAuthenticated: boolean;
     profileData: ProfileType | undefined;
     fetchUserProfile: (address: string) => Promise<ProfileType | undefined>;
-    deletePost: (postId: string, postCid?: string) => Promise<void>; 
+    userKeys: any;
   }
   
 export const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -43,11 +43,19 @@ export interface PostType {
 }
 
 const AppProvider = ({ children }: { children: React.ReactNode }) => {
+  const [SEA, setSEA] = useState<any>(null);
   const [accountData, setAccountData] = useState<AccountType>();
+  const [userKeys, setUserKeys] = useState<any>();
   const [profileData, setProfileData] = useState<ProfileType>();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    import('gun/sea').then(() => {
+      setSEA(Gun.SEA);
+    });
+  }, []);
 
   const updateAccountData = async (address: string) => {
     if (!window.ethereum) return;
@@ -102,20 +110,6 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
   };
 
-  const deletePost = async (postId: string, postCid?: string) => {
-    try {
-      if (!postId) return;
-      // const gun = require("gun"); 
-      if (postCid) {
-        await removePinnedData(postCid);
-      }
-      gun.get("posts").get(postId).put(null);
-      console.log(`🗑️ Post ${postId} deleted`);
-    } catch (error) {
-      console.error("❌ Failed to delete post:", error);
-    }
-  };
-
   useEffect(() => {
     if (typeof window === "undefined" || !window.ethereum) return;
 
@@ -148,15 +142,68 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [router, pathname]);
 
+  useEffect(() => {
+    const generateKeyPair = async () => {
+      if (!SEA) return;
+      let pair;
+      const stored = localStorage.getItem("gunKeyPair");
+
+      if (stored) {
+        pair = JSON.parse(stored);
+      } else {
+        pair = await SEA.pair();
+        localStorage.setItem("gunKeyPair", JSON.stringify(pair));
+      }
+
+      setUserKeys(pair);
+
+      if (accountData?.address) {
+        gun.get("userPubKeys").get(accountData.address).put({
+          pub: pair.pub,
+          epub: pair.epub
+        });
+      }
+    };
+
+    if (SEA && accountData?.address) generateKeyPair();
+  }, [accountData]);
+
+  useEffect(() => {
+    if (!accountData?.address) return;
+
+    const myAddress = accountData.address;
+    const statusPath = `status/${myAddress}`;
+
+    const updateStatus = () => {
+      gun.get(statusPath).put({
+        online: true,
+        timestamp: Date.now(),
+      });
+    };
+
+  updateStatus();
+    const interval = setInterval(updateStatus, 15_000);
+
+    window.addEventListener('beforeunload', () => {
+      gun.get(statusPath).put({ online: false, timestamp: Date.now() });
+    });
+
+    return () => {
+      clearInterval(interval);
+      gun.get(statusPath).put({ online: false, timestamp: Date.now() });
+    };
+  }, [accountData]);
+
   return (
     <AppContext.Provider
       value={{
+        SEA,
         accountData,
         connectToMetaMask,
         isAuthenticated,
         profileData,
         fetchUserProfile,
-        deletePost
+        userKeys
       }}
     >
       {children}

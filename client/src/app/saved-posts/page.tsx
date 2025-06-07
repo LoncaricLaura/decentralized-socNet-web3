@@ -2,9 +2,9 @@
 import { useEffect, useState, useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import { getFile, getIPFSUrl, getIPFSUrls } from "../ipfs";
-import Gun from "gun";
 import Post from "../components/Post";
 import Menu from "../components/Menu";
+import gun from "../../../gun";
 
 export default function SavedPosts() {
   const { accountData, fetchUserProfile } = useContext(AppContext);
@@ -19,7 +19,6 @@ export default function SavedPosts() {
         try {
             if (!accountData?.address) return;
 
-            const gun = Gun();
             const savedPostIds: string[] = [];
             const savedPostsNode = gun.get("users").get(accountData.address).get("savedPosts");
 
@@ -29,8 +28,6 @@ export default function SavedPosts() {
                 });
                 setTimeout(resolve, 1000);
             });
-
-            console.log("Saved Post IDs:", savedPostIds);
 
             if (savedPostIds.length === 0) {
                 setSavedPosts([]);
@@ -50,8 +47,6 @@ export default function SavedPosts() {
                     });
                 })
             );
-
-            console.log("Fetched Saved Posts:", savedPosts);
 
             const userProfilesMap = new Map();
             const fetchProfile = async (userId: string) => {

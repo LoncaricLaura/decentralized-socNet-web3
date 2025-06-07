@@ -52,7 +52,6 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
       });
 
       console.log("Post added to Gun.js!");
-      console.log("post", posts)
       closeModal();
     } catch (error) {
       console.error("Error uploading post:", error);
@@ -76,7 +75,6 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
                 alt="Icon Close"
                 width={25}
                 height={25}
-                // priority
               />
             </button>
             <form className="w-[100%] flex flex-col gap-4" method="POST">

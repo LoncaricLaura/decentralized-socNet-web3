@@ -53,9 +53,7 @@ export default function PostSwiper({ mediaUrls }: PostSwiperProps) {
           width={600}
           height={400}
           className="rounded-lg"
-          // objectFit="cover"
           style={{ width: '100%', height: 'auto' }}
-          // priority
         />
       );
     } else if (type.startsWith('video/')) {
@@ -65,7 +63,6 @@ export default function PostSwiper({ mediaUrls }: PostSwiperProps) {
           height="240"
           controls
           autoPlay
-          // className='object-cover w-full h-full'
           style={{ objectFit: 'cover', width: '100%', height: '100%' }}
         >
           <source src={url} type={type} />

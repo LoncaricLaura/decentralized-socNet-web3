@@ -1,5 +1,3 @@
-// 'use client'
-import Image from 'next/image';
 import { useState } from "react";
 import UploadFile from '../components/UploadFile'
 import { addFile, getIPFSUrl } from '../ipfs'
@@ -77,7 +75,6 @@ export default function EditProfile({ setShowModal, profileData }: EditProfilePr
                 alt="Icon Close"
                 width={25}
                 height={25}
-                // priority
               />
             </button>
             <form className="w-[100%] flex flex-col gap-4" method="POST">

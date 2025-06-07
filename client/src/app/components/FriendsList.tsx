@@ -2,12 +2,14 @@
 import Image from 'next/image';
 import { useContext, useEffect, useState } from "react";
 import { getIPFSUrl } from '../ipfs'
-import Gun from "gun";
 import { AppContext } from "../context/AppContext";
 import { useRouter } from "next/navigation";
+import gun from "../../../gun";
 
 interface FriendsListProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
+  customChangeRoute?: string;
+  title?: string;
 }
 
 interface Friend {
@@ -16,7 +18,7 @@ interface Friend {
   profileImage: string;
 }
 
-export default function FriendsList({ setShowModal }: FriendsListProps, { address }: Friend) {
+const FriendsList: React.FC<FriendsListProps> = ({ setShowModal, customChangeRoute, title}) => {
     const router = useRouter();
     const [friends, setFriends] = useState<Friend[]>([]);
     const { accountData, fetchUserProfile } = useContext(AppContext);
@@ -25,14 +27,17 @@ export default function FriendsList({ setShowModal }: FriendsListProps, { addres
         setShowModal(false);
     };
 
-    const changeRoute = (slug: string) => {
-        router.push(`profile/${slug}`);
-      }
+    const handleRouteChange = (slug: string) => {
+        if (customChangeRoute) {
+            router.push(`${customChangeRoute}/${slug}`);
+        } else {
+            router.push(`/profile/${slug}`);
+        }
+    };
 
     useEffect(() => {
         const fetchFriends = async () => {
             try {
-                const gun = Gun();
                 const userNode = gun.get("users").get(accountData?.address as any).get("friends");
 
                 const friendsList: Friend[] = [];
@@ -67,7 +72,7 @@ export default function FriendsList({ setShowModal }: FriendsListProps, { addres
     return (
       <main className="fixed flex items-center justify-center top-0 left-0 z-50 m-auto w-full h-full bg-[#121212]/85">
         <div className="relative w-[85%] sm:w-1/2 lg:w-1/2 2xl:w-1/3 h-3/4 overflow-auto bg-[#cfcccc] rounded-md px-4 py-8 flex flex-col gap-6 z-50">
-            <p className="text-[#121212] font-bold text-lg">My Friends ({friends.length})</p>
+            <p className="text-[#121212] font-bold text-lg">{title || `My Friends (${friends.length})`}</p>
             <button
               className="absolute top-8 right-4"
               onClick={closeModal}
@@ -86,7 +91,7 @@ export default function FriendsList({ setShowModal }: FriendsListProps, { addres
             ) : (
                 <ul>
                     {friends.map((friend, index) => (
-                        <li key={index} className='flex items-center gap-4 text-black py-2 cursor-pointer' onClick={() => changeRoute(friend.address)}>
+                        <li key={index} className='flex items-center gap-4 text-black py-2 cursor-pointer' onClick={() => handleRouteChange(friend.address)}>
                             <img 
                                 src={friend.profileImage} 
                                 alt="Profile Image" 
@@ -103,3 +108,5 @@ export default function FriendsList({ setShowModal }: FriendsListProps, { addres
       </main>
     );
 }
+
+export default FriendsList;

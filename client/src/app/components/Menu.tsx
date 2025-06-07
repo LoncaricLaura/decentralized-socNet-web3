@@ -1,5 +1,4 @@
 'use client'
-import Image from "next/image";
 import Link from 'next/link'
 import FriendsList from "./FriendsList";
 import { useState } from "react";
@@ -20,7 +19,6 @@ export default function Menu() {
                 alt="Icon Home"
                 width={50}
                 height={50}
-                // priority
             />
             <div className="mt-4" onClick={toggleModalFriendsList}>Friends</div>
         </div>
@@ -30,7 +28,6 @@ export default function Menu() {
                 alt="Icon Profile"
                 width={50}
                 height={50}
-                // priority
             />
             <Link href={`/saved-posts`}>Saved</Link>
         </div>
@@ -40,7 +37,6 @@ export default function Menu() {
                 alt="Icon Profile"
                 width={50}
                 height={50}
-                // priority
             />
             <Link href={`/profile`}>Rewards</Link>
         </div>
