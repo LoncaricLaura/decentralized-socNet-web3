@@ -2,8 +2,6 @@
 import Image from 'next/image';
 import gun from "../../../gun";
 
-declare var window: any
-
 interface HidePostModalProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
   postCid?: string,
@@ -16,12 +14,12 @@ export default function HidePostModal({ setShowModal, postCid, postId, onHide }:
     try {
       if (postId) {
         gun.get('posts').get(postId.toString()).put({ hidden: true });
-        console.log("🕶️ Post hidden via Gun");
+        console.log("Post hidden via Gun");
         if (onHide) onHide();
         setShowModal(false);
       }
     } catch (error) {
-      console.error("❌ Error hiding post:", error);
+      console.error("Error hiding post:", error);
     }
   };
 

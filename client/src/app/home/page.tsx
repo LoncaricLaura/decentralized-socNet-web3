@@ -1,7 +1,6 @@
 'use client';
 import Menu from "../components/Menu";
 import Post from "../components/Post";
-import Image from "next/image";
 import { getFile, getIPFSUrl, getIPFSUrls } from '../ipfs';
 import { useEffect, useState, useContext } from "react";
 import AddPost from "../components/AddPost";
@@ -9,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { AppContext } from "../context/AppContext";
 import FriendRequestNotification from "../components/FriendRequestNotification";
 import ReactTimeAgo from "react-time-ago";
-
+import gun from "../../../gun";
 
 export default function Home() {
     const router = useRouter();
@@ -25,7 +24,6 @@ export default function Home() {
 
     const fetchAllPosts = async () => {
         try {
-            const gun = Gun();
             const postsNode = gun.get('posts');
             const allPosts: any[] = [];
             
@@ -37,7 +35,6 @@ export default function Home() {
                 });
                 setTimeout(resolve, 1000);
             });
-            console.log(allPosts)
 
             const userProfilesMap = new Map();
             const fetchProfile = async (userId: string) => {
@@ -92,12 +89,8 @@ export default function Home() {
         }
     };
     
-    // const postId = 'm6b6lg9eWQhg36xPX4ZU';
-    // gun.get('posts').get(postId).put(null);
-
     const fetchFriendRequests = async () => {
         try {
-            const gun = Gun();
             const friendRequestsNode = gun.get('friendRequests');
     
             const incomingRequests: any[] = [];
@@ -130,7 +123,6 @@ export default function Home() {
 
     const fetchNotifications = async () => {
         try {
-            const gun = Gun();
             const notificationsNode = gun.get("notifications");
     
             const userNotifications: any[] = [];
@@ -171,8 +163,6 @@ export default function Home() {
             return;
         }
     
-        const gun = Gun();
-        
         gun.get('friendRequests').get(requestId).put(null);
 
         const senderNode = gun.get('users').get(senderAddress).get('friends');
@@ -207,7 +197,6 @@ export default function Home() {
     };
     
     const handleDeclineRequest = async (requestId: string) => {
-        const gun = Gun();
         const requestNode = gun.get('friendRequests').get(requestId);
         
         requestNode.put(null);
@@ -230,7 +219,6 @@ export default function Home() {
                             className="rounded-full shadow-md shadow-gray-800 cursor-pointer"
                             onClick={() => router.push(`/profile/${accountData?.address}`)}
                             style={{ width: '80px', height: '80px' }}
-                            // priority
                         />
                         <textarea
                             name="content"
@@ -261,7 +249,7 @@ export default function Home() {
                         <p className="text-center text-gray-400">No posts yet.</p>
                     )}
                 </div>
-                <div className="flex flex-col gap-2 w-1/4 pt-16 hidden md:flex">
+                <div className="flex-col gap-2 w-1/4 pt-16 hidden md:flex">
                     {notifications.length > 0 ? (
                         <div className="mt-6 w-full">
                             <h2 className="font-bold text-lg">Notifications</h2>

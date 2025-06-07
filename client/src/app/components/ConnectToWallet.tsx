@@ -1,5 +1,4 @@
 'use client'
-import { useRouter  } from "next/navigation";
 import { useContext } from "react";
 import Image from 'next/image';
 import { AppContext } from "../context/AppContext";
@@ -16,7 +15,7 @@ interface ConnectToWalletProps {
   setAccountData?: React.Dispatch<React.SetStateAction<AccountType>>;
 }
 
-export default function ConnectToWallet({ setShowModal, setAccountData }: ConnectToWalletProps) {
+export default function ConnectToWallet({ setShowModal }: ConnectToWalletProps) {
   const { connectToMetaMask } = useContext(AppContext);
 
   const closeModal = () => {

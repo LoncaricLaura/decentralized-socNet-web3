@@ -11,10 +11,12 @@ import { PostType, AppContext } from "@/app/context/AppContext";
 import Link from "next/link";
 import FriendsModal from "@/app/components/FriendsModal";
 import FriendsList from "@/app/components/FriendsList";
+import gun from "../../../../gun";
+
 
 export default function Profile() {
   const { slug } = useParams();
-  const { accountData, profileData, fetchUserProfile, deletePost } = useContext(AppContext);
+  const { accountData, profileData, fetchUserProfile } = useContext(AppContext);
   const [showModalEdit, setShowModalEdit] = useState(false);
   const [showModalPost, setShowModalPost] = useState(false);
   const [userProfileData, setUserProfileData] = useState({
@@ -33,7 +35,6 @@ export default function Profile() {
   const fetchProfileData = useCallback(() => {
     if (!slug) return;
 
-    const gun = Gun();
     const postNode = gun.get('posts');
 
     const postsMap = new Map<string, any>();
@@ -44,7 +45,7 @@ export default function Profile() {
       const existing = postsMap.get(postId);
       const updatedHidden = postData.hidden ?? false;
 
-      if (existing && existing.hidden === updatedHidden) return; // prevent unnecessary updates
+      if (existing && existing.hidden === updatedHidden) return;
 
       try {
         if (slug) {
@@ -90,8 +91,7 @@ export default function Profile() {
   useEffect(() => {
     fetchProfileData();
     return () => {
-      const gun = Gun();
-      gun.get('posts').off(); // stops all map listeners
+      gun.get('posts').off();
     };
   }, [slug, fetchUserProfile]); 
 
@@ -109,43 +109,41 @@ export default function Profile() {
     setShowModalFriends(!showModalFriends);
   };
 
-  useEffect(() => {
-    const fetchFriendRequestStatus = async () => {
-      const gun = Gun();
-      const requestNode = gun.get('friendRequests');
+  const fetchFriendRequestStatus = async () => {
+    const requestNode = gun.get('friendRequests');
   
-      requestNode.map().once((requestData) => {
-        if (requestData && requestData.from && requestData.to) {
-          if (requestData.from === accountData?.address && requestData.to === slug) {
-            setFriendRequestStatus('sent');
-          } else if (requestData.to === accountData?.address && requestData.from === slug && requestData.status === 'pending') {
-            setFriendRequestStatus('pending');
-          }
+    requestNode.map().once((requestData) => {
+      if (requestData && requestData.from && requestData.to) {
+        if (requestData.from === accountData?.address && requestData.to === slug) {
+          setFriendRequestStatus('sent');
+        } else if (requestData.to === accountData?.address && requestData.from === slug && requestData.status === 'pending') {
+          setFriendRequestStatus('pending');
         }
-      });
+      }
+    });
 
-      const senderNode = gun.get('users').get(accountData?.address as any).get('friends');
-      const receiverNode = gun.get('users').get(slug as string).get('friends');
+    const senderNode = gun.get('users').get(accountData?.address as any).get('friends');
+    const receiverNode = gun.get('users').get(slug as string).get('friends');
 
-      senderNode.map().once((friendAddress: string) => {
-        if (friendAddress === slug) {
-          setFriendRequestStatus('friends');
-        }
-      });
+    senderNode.map().once((friendAddress: string) => {
+      if (friendAddress === slug) {
+        setFriendRequestStatus('friends');
+      }
+    });
 
-      receiverNode.map().once((friendAddress: string) => {
-        if (friendAddress === accountData?.address) {
-          setFriendRequestStatus('friends');
-        }
-      });
-    };
+    receiverNode.map().once((friendAddress: string) => {
+      if (friendAddress === accountData?.address) {
+        setFriendRequestStatus('friends');
+      }
+    });
+  };
 
+  useEffect(() => {
     fetchFriendRequestStatus();
   }, [accountData?.address, slug]);
 
   const handleSendFriendRequest = async () => {
     if (friendRequestStatus === 'none') {
-      const gun = Gun();
       const requestNode = gun.get('friendRequests');
       const request = {
         from: accountData?.address,
@@ -163,7 +161,6 @@ export default function Profile() {
       setFriendRequestStatus('sent');
       console.log(`Friend request sent to ${slug}`);
     } else if (friendRequestStatus === 'sent') {
-      const gun = Gun();
       const requestNode = gun.get('friendRequests');
       requestNode.map().once((requestData, requestId) => {
         if (requestData && requestData.from === accountData?.address && requestData.to === slug) {
@@ -175,8 +172,6 @@ export default function Profile() {
       console.log(`Friend request canceled for ${slug}`);
     }
   };
-
-  // deletePost("mass79qpjHN5d9VVd7KD");
 
   return (
     <main className="min-h-screen w-full">
@@ -190,7 +185,6 @@ export default function Profile() {
                       width={200}
                       height={200}
                       className="rounded-[50%] border-2 border-white shadow-lg"
-                      // priority
                     />
                   ) : (
                   <div className="rounded-full border-4 border-white shadow-lg w-50 h-50 bg-gray-300 flex items-center justify-center">
@@ -237,7 +231,7 @@ export default function Profile() {
           ) : (
             <div className="pt-5 flex justify-end items-center gap-x-6">
               <button
-                className={`font-bold p-1.5 text-white text-sm md:text-md bg-gradient-to-r from-[#7ca3f0]/60 to-[#4a90e2]/60 text-[#121212] rounded-md min-w-20 md:min-w-32 w-fit ${friendRequestStatus === 'sent' ? 'bg-gray-400' : ''}`}
+                className={`font-bold p-1.5 text-sm md:text-md bg-gradient-to-r from-[#7ca3f0]/60 to-[#4a90e2]/60 text-[#121212] rounded-md min-w-20 md:min-w-32 w-fit ${friendRequestStatus === 'sent' ? 'bg-gray-400' : ''}`}
                 onClick={friendRequestStatus === 'friends' ? toggleModalFriends : handleSendFriendRequest}
               >
                 {friendRequestStatus === 'friends' ? 'Friends' : (friendRequestStatus === 'sent' ? 'Request Sent' : 'Add friend')}

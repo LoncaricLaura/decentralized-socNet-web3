@@ -28,6 +28,7 @@
     "react-time-ago": "^7.3.3",
     "stream-browserify": "^3.0.0",
     "swiper": "^11.1.9",
+    "text-encoding": "^0.7.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

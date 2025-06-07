@@ -1,6 +1,3 @@
-import { ServiceMap } from '@libp2p/interface';
-import { HeliaLibp2p } from 'helia';
-import { Libp2p } from 'libp2p';
 import React, { useRef, useState, DragEvent, ChangeEvent } from 'react';
 
 interface InputFilesProps {
@@ -8,6 +5,7 @@ interface InputFilesProps {
   setFiles: (files: File[]) => void;
   txt?: string;
   isRequired?: boolean;
+  setShowModal?: (show: boolean) => void;
 }
 
 const InputFiles: React.FC<InputFilesProps> = ({ files, setFiles, txt = '', isRequired = false }) => {
@@ -94,8 +92,4 @@ const InputFiles: React.FC<InputFilesProps> = ({ files, setFiles, txt = '', isRe
 };
 
 export default InputFiles;
-
-function createUnixFs(helia: HeliaLibp2p<Libp2p<ServiceMap>>) {
-  throw new Error('Function not implemented.');
-}
 

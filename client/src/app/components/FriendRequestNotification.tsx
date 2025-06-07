@@ -1,5 +1,4 @@
 import { FC } from "react";
-import Image from "next/image";
 
 const FriendRequestNotification: FC<{ requestId: string, from: string, from_name: string, from_img: string, to: string, handleAccept: Function, handleDecline: Function }> = ({ requestId, from_name, from_img, handleAccept, handleDecline }) => {
   return (

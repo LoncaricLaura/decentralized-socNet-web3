@@ -4,7 +4,7 @@ import "./globals.css";
 import Header from "./components/Header"
 import AppProvider from "./context/AppContext";
 
-const josefinSans = Josefin_Sans({ subsets: ["latin"], weight: ["600"] });
+const josefinSans = Josefin_Sans({ subsets: ["latin"], weight: ["500"] });
 
 export const metadata: Metadata = {
   title: "Spark",

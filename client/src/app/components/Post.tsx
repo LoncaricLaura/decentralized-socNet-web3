@@ -1,5 +1,4 @@
 'use client'
-import Image from "next/image";
 import React, { useContext, useEffect, useState } from 'react'
 import ReactTimeAgo from 'react-time-ago'
 import '../utils/timeAgoInit';
@@ -43,11 +42,10 @@ export default function Post({
   mediaUrls,
   likes,
   hidden = false,
-  fetchData,
   onUnsave
 }: PostProps) {
 
-  const { accountData, profileData, fetchUserProfile } = useContext(AppContext);
+  const { accountData, profileData } = useContext(AppContext);
   const router = useRouter();
   const pathName = usePathname();
   const slug = address.toLowerCase();
@@ -88,11 +86,11 @@ export default function Post({
     try {
       if (postId) {
         gun.get('posts').get(postId.toString()).put({ hidden: false });
-        console.log("🕶️ Post hidden via Gun");
+        console.log("Post shown via Gun");
         setLocalHidden(false);
       }
     } catch (error) {
-      console.error("❌ Error showing post:", error);
+      console.error("Error showing post:", error);
     }
   };
 
@@ -127,7 +125,6 @@ export default function Post({
           className="rounded-full shadow-md shadow-gray-800 cursor-pointer"
           onClick={changeRoute}
           style={{ width: "80px", height: "80px" }}
-          // priority
         />
         <div className="relative w-full max-w-[80%]">
           <div className="flex justify-between text-[#e8f0fa]">
@@ -162,7 +159,6 @@ export default function Post({
               alt="Icon Comment"
               width={26}
               height={26}
-              // priority
               className="cursor-pointer absolute left-8 -bottom-0.5"
               onClick={toggleModalComments}
             />
