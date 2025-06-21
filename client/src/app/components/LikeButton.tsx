@@ -7,11 +7,12 @@ import LikesModal from './LikesModal';
 interface LikePostProps {
   postId: number,
   currentLikes: number,
+  postAuthorAddress: string; 
   onLikersChange?: (likers: string[]) => void;
 }
 
 
-export default function LikeButton({ postId, currentLikes, onLikersChange }: LikePostProps) {
+export default function LikeButton({ postId, currentLikes, postAuthorAddress, onLikersChange }: LikePostProps) {
     const { profileData } = useContext(AppContext);
     const [likes, setLikes] = useState(currentLikes);
     const [isLiked, setIsLiked] = useState(false);

@@ -19,81 +19,78 @@ export default function InboxList() {
   const [inboxes, setInboxes] = useState<InboxPreview[]>([]);
 
     useEffect(() => {
-        if (!accountData?.address) return;
-        const myAddress = accountData.address;
-        const today = new Date().toISOString().split("T")[0];
+      if (!accountData?.address) return;
+      const myAddress = accountData.address;
+      const today = new Date().toISOString().split("T")[0];
 
-        gun.get("userInboxes").get(myAddress).once((inboxes) => {
-            if (!inboxes) return;
-            Object.keys(inboxes).forEach(async (otherUserAddress) => {
-                if (!otherUserAddress) return;
+      gun.get("userInboxes").get(myAddress).once((inboxes) => {
+        if (!inboxes) return;
+        Object.keys(inboxes).forEach(async (otherUserAddress) => {
+          if (!otherUserAddress) return;
 
-                const pathsToCheck = [
-                    `inbox/${myAddress}/${otherUserAddress}/${today}`,
-                    `inbox/${otherUserAddress}/${myAddress}/${today}`
-                ];
+          const pathsToCheck = [
+            `inbox/${myAddress}/${otherUserAddress}/${today}`,
+            `inbox/${otherUserAddress}/${myAddress}/${today}`
+          ];
 
-                for (const path of pathsToCheck) {
-                    const indexPath = `${path}/index`;
-                    const timestamps: string[] = [];
+          for (const path of pathsToCheck) {
+            const indexPath = `${path}/index`;
+            const timestamps: string[] = [];
 
-                    gun.get(indexPath).map().once(async (_val, key) => {
-                        if (!key) return;
+            gun.get(indexPath).map().once(async (_val, key) => {
+              if (!key) return;
 
-                        timestamps.push(key);
+              timestamps.push(key);
 
-                        const recentKey = timestamps
-                        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+              const recentKey = timestamps.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
 
-                        if (recentKey) {
-                            gun.get(`${path}/${recentKey}`).once(async (msg) => {
-                                if (!msg?.text || !msg.timestamp) return;
-                                const profile = await fetchUserProfile(otherUserAddress);
+              if (recentKey) {
+                gun.get(`${path}/${recentKey}`).once(async (msg) => {
+                  if (!msg?.text || !msg.timestamp) return;
+                  const profile = await fetchUserProfile(otherUserAddress);
 
-                                setInboxes((prev) => {
-                                    const exists = prev.find(i => i.target === otherUserAddress);
-                                    if (!exists) {
-                                    return [
-                                        ...prev,
-                                        {
-                                        target: otherUserAddress,
-                                        lastMessage: msg.text,
-                                        timestamp: msg.timestamp,
-                                        name: profile?.name,
-                                        avatarCid: profile?.profileImageCid,
-                                        }
-                                    ];
-                                    }
-
-                                    if (msg.timestamp > exists.timestamp) {
-                                    return prev.map(i =>
-                                        i.target === otherUserAddress
-                                        ? { ...i, lastMessage: msg.text, timestamp: msg.timestamp }
-                                        : i
-                                    );
-                                    }
-
-                                    return prev;
-                                });
-                            });
-
-                            gun.get(`status/${otherUserAddress}`).on((status) => {
-                                const isOnline = status?.online && Date.now() - status.timestamp < 30_000;
-
-                                setInboxes((prev) =>
-                                    prev.map((i) =>
-                                    i.target === otherUserAddress
-                                        ? { ...i, online: isOnline }
-                                        : i
-                                    )
-                                );
-                                });
+                  setInboxes((prev) => {
+                    const exists = prev.find(i => i.target === otherUserAddress);
+                    if (!exists) {
+                      return [
+                        ...prev,
+                        {
+                          target: otherUserAddress,
+                          lastMessage: msg.text,
+                          timestamp: msg.timestamp,
+                          name: profile?.name,
+                          avatarCid: profile?.profileImageCid,
                         }
-                    });
-                }
-            });
-        });
+                      ];
+                    }
 
+                    if (msg.timestamp > exists.timestamp) {
+                      return prev.map(i =>
+                          i.target === otherUserAddress
+                          ? { ...i, lastMessage: msg.text, timestamp: msg.timestamp }
+                          : i
+                      );
+                    }
+                    return prev;
+                  });
+                });
+
+                gun.get(`status/${otherUserAddress}`).on((status) => {
+                  const isOnline = status?.online && Date.now() - status.timestamp < 30_000;
+
+                  setInboxes((prev) =>
+                    prev.map((i) =>
+                    i.target === otherUserAddress
+                        ? { ...i, online: isOnline }
+                        : i
+                    )
+                  );
+                });
+              }
+            });
+          }
+        });
+      });
     }, [accountData]);
 
   const sorted = [...inboxes].sort((a, b) => b.timestamp - a.timestamp);

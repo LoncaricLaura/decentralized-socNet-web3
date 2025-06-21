@@ -3,11 +3,16 @@ import UploadFile from '../components/UploadFile'
 import { addFile, addJson } from '../ipfs'
 import gun from "../../../gun";
 import { AppContext } from "../context/AppContext";
+import { ethers } from "ethers";
+import { PROFILE_ABI, PROFILE_ADDRESS } from '../../../../context/Constants';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AddPostProps {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
   profileData: { name: string, description: string; };
 }
+
+declare var window: any
 
 export default function AddPost({ setShowModal, profileData }: AddPostProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -41,8 +46,8 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
 
       const postCid = await addJson(postJson);
 
-      const posts = gun.get("posts");
-      posts.set({
+      const postId = uuidv4(); 
+      gun.get("posts").get(postId).put({
         cid: postCid,
         userId: accountData?.address,
         timestamp: postJson.timestamp,
@@ -52,6 +57,19 @@ export default function AddPost({ setShowModal, profileData }: AddPostProps) {
       });
 
       console.log("Post added to Gun.js!");
+
+      const ethereum = window.ethereum;
+      const provider = new ethers.BrowserProvider(ethereum);
+      const signer = await provider.getSigner();
+      const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, signer);
+
+      const hasPosted = await profileContract.hasPosted(accountData?.address);
+      if (!hasPosted) {
+        const transaction = await profileContract.markFirstPost();
+        await transaction.wait();
+        console.log("First post marked for reward!");
+      }
+
       closeModal();
     } catch (error) {
       console.error("Error uploading post:", error);

@@ -3,6 +3,7 @@ import { Josefin_Sans } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header"
 import AppProvider from "./context/AppContext";
+import ClaimRewardButton from "./components/ClaimRewardButton";
 
 const josefinSans = Josefin_Sans({ subsets: ["latin"], weight: ["500"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <AppProvider>
           {children}
           <Header />
+          <ClaimRewardButton />
         </AppProvider>
       </body>
     </html>

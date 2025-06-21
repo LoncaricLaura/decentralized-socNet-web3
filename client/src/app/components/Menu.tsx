@@ -38,7 +38,7 @@ export default function Menu() {
                 width={50}
                 height={50}
             />
-            <Link href={`/profile`}>Rewards</Link>
+            <Link href={`/rewards`}>Rewards</Link>
         </div>
 
       </main>

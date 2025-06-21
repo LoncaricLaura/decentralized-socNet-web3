@@ -2,8 +2,9 @@
 import { ethers } from "ethers";
 import { usePathname, useRouter } from "next/navigation";
 import React, { createContext, useCallback, useEffect, useState } from "react";
-import { PROFILE_ADDRESS, PROFILE_ABI, POST_ABI, POST_ADDRESS } from "../../../../context/Constants";
+import { PROFILE_ADDRESS, PROFILE_ABI, SPARKTOKEN_ADDRESS, SPARKTOKEN_ABI } from "../../../../context/Constants";
 import gun from "../../../gun";
+import Gun from "gun/gun";
 
 declare var window: any
 
@@ -15,6 +16,14 @@ interface AppContextType {
     profileData: ProfileType | undefined;
     fetchUserProfile: (address: string) => Promise<ProfileType | undefined>;
     userKeys: any;
+    canClaimReward: boolean;
+    canClaimLikeReward: boolean;
+    checkRewardStatus: () => Promise<void>;
+    claimFirstPostReward: () => Promise<void>;
+    claimLikeReward: (postId: string) => Promise<void>;
+    checkLikeRewardStatus: (postId: string) => Promise<boolean>;
+    updateAccountData: (address: string) => Promise<void>;
+    spkBalance: string;
   }
   
 export const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -48,14 +57,11 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [userKeys, setUserKeys] = useState<any>();
   const [profileData, setProfileData] = useState<ProfileType>();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [spkBalance, setSpkBalance] = useState<string>("0");
+  const [canClaimReward, setCanClaimReward] = useState(false);
+  const [canClaimLikeReward, _setCanClaimLikeReward] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    import('gun/sea').then(() => {
-      setSEA(Gun.SEA);
-    });
-  }, []);
 
   const updateAccountData = async (address: string) => {
     if (!window.ethereum) return;
@@ -72,13 +78,18 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setIsAuthenticated(true);
 
     const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
-    const userProfile = await profileContract.getUser(address);
+    const isRegistered = await profileContract.isUserRegistered(address);
 
-    setProfileData({
-      name: userProfile.name,
-      description: userProfile.description,
-      profileImageCid: userProfile.profileImageCid,
-    });
+    if (isRegistered) {
+      const userProfile = await profileContract.getUser(address);
+      setProfileData({
+        name: userProfile.name,
+        description: userProfile.description,
+        profileImageCid: userProfile.profileImageCid,
+      });
+    } else {
+      setProfileData(undefined);
+    }
   };
 
   const connectToMetaMask = useCallback(async () => {
@@ -143,6 +154,12 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   }, [router, pathname]);
 
   useEffect(() => {
+    import('gun/sea').then(() => {
+      setSEA(Gun.SEA);
+    });
+  }, []);
+
+  useEffect(() => {
     const generateKeyPair = async () => {
       if (!SEA) return;
       let pair;
@@ -181,7 +198,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
-  updateStatus();
+    updateStatus();
     const interval = setInterval(updateStatus, 15_000);
 
     window.addEventListener('beforeunload', () => {
@@ -194,6 +211,72 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [accountData]);
 
+  const checkRewardStatus = useCallback(async () => {
+    if (!accountData?.address) return;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const contract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
+
+    const posted = await contract.hasPosted(accountData.address);
+    const claimed = await contract.hasClaimedFirstPostReward(accountData.address);
+    setCanClaimReward(posted && !claimed);
+  }, [accountData?.address]);
+
+  const claimFirstPostReward = useCallback(async () => {
+    if (!accountData?.address) return;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, signer);
+
+    const tx = await contract.claimFirstPostReward();
+    await tx.wait();
+    alert("🎉 Reward claimed!");
+    setCanClaimReward(false);
+  }, [accountData?.address]);
+
+  const checkLikeRewardStatus = useCallback(async (postId: string) => {
+    if (!accountData?.address) return false;
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const contract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, provider);
+    const postHash = ethers.keccak256(ethers.toUtf8Bytes(postId.toString()));
+
+    const rewarded = await contract.postRewarded(postHash);
+    return !rewarded;
+  }, [accountData?.address]);
+
+  const claimLikeReward = useCallback(async (postId: string) => {
+    if (!accountData?.address) return;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, signer);
+
+    const postHash = ethers.keccak256(ethers.toUtf8Bytes(postId.toString()));
+    const tx = await contract.claimLikeReward(postHash);
+    await tx.wait();
+
+    alert("Likes reward claimed!");
+  }, [accountData?.address]);
+
+  useEffect(() => {
+    if (accountData?.address) {
+      checkRewardStatus();
+    }
+  }, [accountData?.address]);
+
+  const loadSparkTokenBalance = async () => {
+    if (!accountData?.address) return;
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const contract = new ethers.Contract(SPARKTOKEN_ADDRESS, SPARKTOKEN_ABI, provider);
+
+    const balance = await contract.balanceOf(accountData.address);
+    setSpkBalance(ethers.formatUnits(balance, 18));
+  };
+
+  useEffect(() => {
+    if (accountData?.address) loadSparkTokenBalance();
+  }, [accountData]);
+
   return (
     <AppContext.Provider
       value={{
@@ -203,7 +286,15 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated,
         profileData,
         fetchUserProfile,
-        userKeys
+        userKeys,
+        canClaimReward,
+        canClaimLikeReward,
+        checkRewardStatus,
+        claimFirstPostReward,
+        claimLikeReward,
+        checkLikeRewardStatus,
+        updateAccountData,
+        spkBalance
       }}
     >
       {children}

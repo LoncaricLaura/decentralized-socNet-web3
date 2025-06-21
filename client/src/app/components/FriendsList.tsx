@@ -35,36 +35,36 @@ const FriendsList: React.FC<FriendsListProps> = ({ setShowModal, customChangeRou
         }
     };
 
-    useEffect(() => {
-        const fetchFriends = async () => {
-            try {
-                const userNode = gun.get("users").get(accountData?.address as any).get("friends");
+    const fetchFriends = async () => {
+        try {
+            const userNode = gun.get("users").get(accountData?.address as any).get("friends");
 
-                const friendsList: Friend[] = [];
-    
-                userNode.map().once(async (friendAddress: string) => {
-                    if (friendAddress && friendAddress !== accountData?.address) {
-                        try {
-                            const profile = await fetchUserProfile(friendAddress);
-                            if (profile) {
-                                friendsList.push({
-                                    address: friendAddress,
-                                    name: profile.name,
-                                    profileImage: getIPFSUrl(profile.profileImageCid),
-                                });
-                            }
-                        } catch (err) {
-                            console.error(`Error fetching profile for ${friendAddress}:`, err);
+            const friendsList: Friend[] = [];
+
+            userNode.map().once(async (friendAddress: string) => {
+                if (friendAddress && friendAddress !== accountData?.address) {
+                    try {
+                        const profile = await fetchUserProfile(friendAddress);
+                        if (profile) {
+                            friendsList.push({
+                                address: friendAddress,
+                                name: profile.name,
+                                profileImage: getIPFSUrl(profile.profileImageCid),
+                            });
                         }
+                    } catch (err) {
+                        console.error(`Error fetching profile for ${friendAddress}:`, err);
                     }
-                    setFriends([...friendsList]);
+                }
+                setFriends([...friendsList]);
 
-                });
-            } catch (error) {
-                console.error("Error fetching friends list:", error);
-            }
-        };
-    
+            });
+        } catch (error) {
+            console.error("Error fetching friends list:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchFriends();
     }, [accountData?.address]);
     

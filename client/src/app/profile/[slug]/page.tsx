@@ -12,7 +12,11 @@ import Link from "next/link";
 import FriendsModal from "@/app/components/FriendsModal";
 import FriendsList from "@/app/components/FriendsList";
 import gun from "../../../../gun";
+import { ethers } from "ethers";
+import { PROFILE_ADDRESS, PROFILE_ABI, SPARKTOKEN_ADDRESS, SPARKTOKEN_ABI } from "../../../../../context/Constants";
+import TipModal from "@/app/components/TipModal";
 
+declare var window: any
 
 export default function Profile() {
   const { slug } = useParams();
@@ -28,10 +32,12 @@ export default function Profile() {
   const [friendRequestStatus, setFriendRequestStatus] = useState<'none' | 'pending' | 'sent' | 'friends'>('none');
   const [showModalFriends, setShowModalFriends] = useState(false);
   const [showModalFriendsList, setShowModalFriendsList] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
 
   const toggleModalFriendsList = () => {
     setShowModalFriendsList(!showModalFriendsList);
   };
+
   const fetchProfileData = useCallback(() => {
     if (!slug) return;
 
@@ -173,6 +179,47 @@ export default function Profile() {
     }
   };
 
+  const handleTipUser = async (amountStr: string) => {
+    if (!slug || !accountData?.address) return;
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const profileContract = new ethers.Contract(PROFILE_ADDRESS, PROFILE_ABI, signer);
+      const sparkTokenContract = new ethers.Contract(SPARKTOKEN_ADDRESS, SPARKTOKEN_ABI, signer);
+
+      const amountToTip = ethers.parseUnits(amountStr, 18);
+
+      const approveTx = await sparkTokenContract.approve(PROFILE_ADDRESS, amountToTip);
+      await approveTx.wait();
+
+      const tipTx = await profileContract.tip(slug, amountToTip);
+      await tipTx.wait();
+
+      gun.get('tips').set({
+        from: accountData.address,
+        to: slug,
+        amount: amountStr,
+        timestamp: Date.now()
+      });
+
+      alert(`Successfully tipped ${amountStr} SPK`);
+      setShowTipModal(false);
+    } catch (err: any) {
+      console.error("Tip failed", err);
+      alert("Tip failed: " + (err.message ?? err));
+    }
+  };
+
+  // const deletePostsByUser = (targetUserId: string) => {
+  //   gun.get("posts").map().once((post, key) => {
+  //     if (post?.userId === targetUserId) {
+  //       console.log(`Deleting post with key: ${key}`);
+  //       gun.get("posts").get(key).put(null);
+  //     }
+  //   });
+  // };
+
   return (
     <main className="min-h-screen w-full">
       <div className="relative px-4 sm:px-16 2xl:px-24 py-16 w-full">
@@ -193,6 +240,7 @@ export default function Profile() {
                 )}
                 <div className="flex flex-col gap-2">
                     <h1 className="text-xl font-bold text-white">{userProfileData.name}</h1>
+                    {/* <button onClick={() => deletePostsByUser(slug as string)}>DELETE</button> */}
                     <p className="text-md text-gray-300">@{userProfileData.name.toLowerCase().replace(/\s+/g, '')}</p>
                 </div>
             </div>
@@ -249,6 +297,18 @@ export default function Profile() {
               />
               <p className="text-sm">Send message</p>
             </Link>
+            <button
+              className="flex items-center justify-center gap-1  rounded-md min-w-20 md:min-w-32 p-1.5 w-fit"
+              onClick={() => setShowTipModal(true)}
+            >
+              <Image
+                src="/icons/icon-tip.png"
+                alt="Tip Icon"
+                width={30}
+                height={30}
+              />
+              <span className="text-sm text-center">Tip User</span>
+            </button>
           </div>
           )
         }
@@ -299,6 +359,7 @@ export default function Profile() {
       {showModalPost && <AddPost setShowModal={setShowModalPost} profileData={userProfileData} />}
       {showModalFriends && <FriendsModal setShowModal={setShowModalFriends} slug={slug} setFriendRequestStatus={setFriendRequestStatus} />}
       {showModalFriendsList && <FriendsList setShowModal={setShowModalFriendsList} />}
+      {showTipModal && <TipModal onClose={() => setShowTipModal(false)} onConfirm={handleTipUser} />}
     </main>
   );
 }

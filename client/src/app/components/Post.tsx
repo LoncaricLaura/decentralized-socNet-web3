@@ -6,11 +6,11 @@ import PostSwiper from "./PostSwiper";
 import LikeButton from "./LikeButton";
 import { usePathname, useRouter } from "next/navigation";
 import { AppContext } from "../context/AppContext";
-import en from 'javascript-time-ago/locale/en'
 import HidePostModal from "./HidePostModal";
 import Comments from "./Comments";
 import SavePostButton from "./SavePostButton";
 import gun from "../../../gun";
+import ClaimLikeRewardButton from './ClaimLikeRewardButton';
 
 declare var window: any
 
@@ -27,7 +27,7 @@ interface PostProps {
   likes: number;
   hidden: boolean;
   fetchData?: () => void;
-  onUnsave?: (postId: string) => void
+  onUnsave?: (postId: string, user: string) => void
 }
 
 export default function Post({
@@ -55,6 +55,7 @@ export default function Post({
   const pathname = usePathname();
   const [likers, setLikers] = useState<string[]>([]);
   const [localHidden, setLocalHidden] = useState(hidden);
+  const { checkLikeRewardStatus } = useContext(AppContext);
 
   const changeRoute = () => {
     router.push(`profile/${slug}`);
@@ -68,15 +69,15 @@ export default function Post({
     setShowModalComments(!showModalComments);
   }
 
-  useEffect(() => {
-    const updateSize = () => {
-      if (pathname === '/saved-posts') {
-        setImageSize(30);
-      } else {
-        setImageSize(window.innerWidth < 1024 ? 30 : 50);
-      }
+  const updateSize = () => {
+    if (pathname === '/saved-posts') {
+      setImageSize(30);
+    } else {
+      setImageSize(window.innerWidth < 1024 ? 30 : 50);
     }
-
+  }
+  
+  useEffect(() => {
     updateSize();
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize)
@@ -86,7 +87,6 @@ export default function Post({
     try {
       if (postId) {
         gun.get('posts').get(postId.toString()).put({ hidden: false });
-        console.log("Post shown via Gun");
         setLocalHidden(false);
       }
     } catch (error) {
@@ -97,6 +97,12 @@ export default function Post({
   useEffect(() => {
     setLocalHidden(hidden);
   }, [hidden]);
+
+  useEffect(() => {
+      if (accountData?.address) {
+        checkLikeRewardStatus(postId);
+      }
+    }, [accountData?.address]);
 
   return (
     <div className="relative bg-[#E8EAF7]/10 rounded-md shadow-md mb-4 hover:shadow-lg h-auto">
@@ -153,7 +159,7 @@ export default function Post({
           )}
 
           <div className="relative flex items-start space-x-3 pt-4 text-gray-500">
-            <LikeButton postId={postId} currentLikes={likes} onLikersChange={(updatedLikers) => setLikers(updatedLikers)} />
+            <LikeButton postId={postId} currentLikes={likes} postAuthorAddress={address} onLikersChange={(updatedLikers) => setLikers(updatedLikers)} />
             <img
               src="/icons/icon-comment.svg"
               alt="Icon Comment"
@@ -162,7 +168,7 @@ export default function Post({
               className="cursor-pointer absolute left-8 -bottom-0.5"
               onClick={toggleModalComments}
             />
-            <SavePostButton postId={postId} onUnsave={onUnsave} />
+            <SavePostButton postId={postId} user={address} onUnsave={onUnsave} />
           </div>
 
           {showModalComments && <Comments setShowModal={setShowModalComments} postId={postId} currentUser={{
@@ -172,6 +178,9 @@ export default function Post({
           </div>
         </div>
       
+      {accountData?.address && (
+        <ClaimLikeRewardButton postId={postId} />
+      )}
       {showModalHide && <HidePostModal setShowModal={setShowModalHide} postCid={postCid} postId={postId} onHide={() => setLocalHidden(true)}  />}
     </div>
   );

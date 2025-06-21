@@ -1,17 +1,17 @@
 import { useEffect, useState, useContext } from "react";
 import Image from "next/image";
-import Gun from "gun";
+import gun from "../../../gun";
 import { AppContext } from "../context/AppContext";
 
 interface SavePostButtonProps {
   postId: string;
-  onUnsave?: (postId: string) => void; 
+  user: string;
+  onUnsave?: (postId: string, user: string) => void; 
 }
 
-const SavePostButton: React.FC<SavePostButtonProps> = ({ postId, onUnsave }) => {
+const SavePostButton: React.FC<SavePostButtonProps> = ({ postId, user, onUnsave }) => {
   const { accountData } = useContext(AppContext);
   const [isSaved, setIsSaved] = useState(false);
-  const gun = Gun();
 
   useEffect(() => {
     if (!accountData?.address) return;
@@ -40,7 +40,7 @@ const SavePostButton: React.FC<SavePostButtonProps> = ({ postId, onUnsave }) => 
           setIsSaved(false);
 
           if (onUnsave) {
-            onUnsave(postId);
+            onUnsave(postId, user);
           }
         }
       });

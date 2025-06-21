@@ -7,14 +7,14 @@ import Menu from "../components/Menu";
 import gun from "../../../gun";
 
 export default function SavedPosts() {
-  const { accountData, fetchUserProfile } = useContext(AppContext);
-  const [savedPosts, setSavedPosts] = useState<any[]>([]);
+    const { accountData, fetchUserProfile } = useContext(AppContext);
+    const [savedPosts, setSavedPosts] = useState<any[]>([]);
 
-  const handleUnsavePost = (postId: string) => {
+    const handleUnsavePost = (postId: string, user: string) => {
         setSavedPosts((prevPosts) => prevPosts.filter((post) => post.postId !== postId));
+        gun.get("users").get(user).get("savedPosts").get(postId).put(null)
     };
 
-  useEffect(() => {
     const fetchSavedPosts = async () => {
         try {
             if (!accountData?.address) return;
@@ -100,8 +100,9 @@ export default function SavedPosts() {
         }
     };
 
-    fetchSavedPosts();
-}, [accountData?.address]);
+    useEffect(() => {
+        fetchSavedPosts();
+    }, [accountData?.address]);
 
 
   return (
@@ -113,7 +114,7 @@ export default function SavedPosts() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 2xl:gap-4 overflow-hidden">
                     {savedPosts.length > 0 ? (
                         savedPosts.map((post) => (
-                                <Post
+                            <Post
                                 postId={post.postId}
                                 key={post.postId}
                                 avatarUrl={post.avatarUrl}
@@ -126,7 +127,7 @@ export default function SavedPosts() {
                                 likes={post.likes}
                                 hidden={post.hidden}
                                 onUnsave={handleUnsavePost}
-                                />
+                            />
                         ))
                     ) : (
                         <p className="text-gray-400">No saved posts yet.</p>
